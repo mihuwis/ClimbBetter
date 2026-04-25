@@ -1,0 +1,16 @@
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\bin\Debug\net9.0\ClimbBetter.Application.deps.json
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\bin\Debug\net9.0\ClimbBetter.Application.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\bin\Debug\net9.0\ClimbBetter.Application.pdb
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\bin\Debug\net9.0\ClimbBetter.Domain.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\bin\Debug\net9.0\ClimbBetter.Domain.pdb
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.csproj.AssemblyReference.cache
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.AssemblyInfoInputs.cache
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.AssemblyInfo.cs
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.csproj.CoreCompileInputs.cache
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.sourcelink.json
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBet.55368DCE.Up2Date
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\refint\ClimbBetter.Application.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ClimbBetter.Application.pdb
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Application\obj\Debug\net9.0\ref\ClimbBetter.Application.dll

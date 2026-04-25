@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "2ufbMmmgLRafgOBY9fMVRMtdrNE+6v38e0LO49YvnlA=",
+  "Source": "ClimbBetter.Api",
+  "BasePath": "_content/ClimbBetter.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
