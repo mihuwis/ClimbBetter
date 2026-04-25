@@ -38,3 +38,4 @@ C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\re
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\ClimbBetter.Api.pdb
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\ClimbBetter.Api.genruntimeconfig.cache
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\ref\ClimbBetter.Api.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll

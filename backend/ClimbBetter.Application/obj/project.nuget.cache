@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "8vqhUyMnI34=",
+  "dgSpecHash": "8fGtcHO6x4o=",
   "success": true,
   "projectFilePath": "C:\\Users\\micha\\developer\\ClimbBetter\\backend\\ClimbBetter.Application\\ClimbBetter.Application.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\micha\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.7\\microsoft.extensions.dependencyinjection.abstractions.10.0.7.nupkg.sha512"
+  ],
   "logs": []
 }

@@ -9,15 +9,25 @@
       "ClimbBetter.Infrastructure/1.0.0": {
         "dependencies": {
           "ClimbBetter.Application": "1.0.0",
-          "ClimbBetter.Domain": "1.0.0"
+          "ClimbBetter.Domain": "1.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         },
         "runtime": {
           "ClimbBetter.Infrastructure.dll": {}
         }
       },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.7": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.726.21808"
+          }
+        }
+      },
       "ClimbBetter.Application/1.0.0": {
         "dependencies": {
-          "ClimbBetter.Domain": "1.0.0"
+          "ClimbBetter.Domain": "1.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         },
         "runtime": {
           "ClimbBetter.Application.dll": {
@@ -41,6 +51,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw==",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/10.0.7",
+      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.10.0.7.nupkg.sha512"
     },
     "ClimbBetter.Application/1.0.0": {
       "type": "project",
