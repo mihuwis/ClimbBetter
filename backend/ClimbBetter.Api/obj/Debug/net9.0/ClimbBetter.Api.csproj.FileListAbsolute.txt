@@ -39,3 +39,12 @@ C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\Cl
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\ClimbBetter.Api.genruntimeconfig.cache
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\obj\Debug\net9.0\ref\ClimbBetter.Api.dll
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\MediatR.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\MediatR.Contracts.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Scalar.AspNetCore.dll
