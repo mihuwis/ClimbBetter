@@ -16,3 +16,5 @@ C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\obj\Debu
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\obj\Debug\net9.0\refint\ClimbBetter.Infrastructure.dll
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\obj\Debug\net9.0\ClimbBetter.Infrastructure.pdb
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\obj\Debug\net9.0\ref\ClimbBetter.Infrastructure.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\bin\Debug\net9.0\ClimbBetter.Infrastructure.runtimeconfig.json
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Infrastructure\obj\Debug\net9.0\ClimbBetter.Infrastructure.genruntimeconfig.cache

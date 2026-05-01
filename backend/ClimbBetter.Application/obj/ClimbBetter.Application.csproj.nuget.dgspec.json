@@ -57,7 +57,7 @@
             },
             "Microsoft.Extensions.DependencyInjection.Abstractions": {
               "target": "Package",
-              "version": "[10.0.7, )"
+              "version": "[10.0.0, )"
             }
           },
           "imports": [

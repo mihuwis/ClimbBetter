@@ -48,3 +48,8 @@ C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Mi
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\System.Diagnostics.DiagnosticSource.dll
 C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Scalar.AspNetCore.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Npgsql.dll
+C:\Users\micha\developer\ClimbBetter\backend\ClimbBetter.Api\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
