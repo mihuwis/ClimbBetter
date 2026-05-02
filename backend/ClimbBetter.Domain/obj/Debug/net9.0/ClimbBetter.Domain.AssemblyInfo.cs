@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClimbBetter.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+094ac4f51c0d1fd6e7e5ea3c75ed6ae8362e9dc2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da95d7291c58ea131893a76867ca66fab56763e4")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClimbBetter.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClimbBetter.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

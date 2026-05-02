@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("1c864747-988a-4188-95e6-4b731c433d14")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+094ac4f51c0d1fd6e7e5ea3c75ed6ae8362e9dc2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da95d7291c58ea131893a76867ca66fab56763e4")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
