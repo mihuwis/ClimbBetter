@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\ClimbBetter.Api.props" />
-</Project>
