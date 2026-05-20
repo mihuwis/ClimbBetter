@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClimbBetter.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+39f0b6e804e51154f472c9e5e2134579924305ce")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1aabd7ec38f65ebcc5e2b8c298e84f38e3b520bc")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClimbBetter.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClimbBetter.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
