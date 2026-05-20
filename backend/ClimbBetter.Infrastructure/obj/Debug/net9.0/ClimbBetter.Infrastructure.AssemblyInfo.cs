@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClimbBetter.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1aabd7ec38f65ebcc5e2b8c298e84f38e3b520bc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43b2829a0c5d5b984fbfb99eda5a063e69f18b99")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClimbBetter.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClimbBetter.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
