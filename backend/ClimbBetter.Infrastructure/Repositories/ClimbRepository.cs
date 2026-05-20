@@ -8,17 +8,25 @@ namespace ClimbBetter.Infrastructure.Repositories
     public class ClimbRepository : IClimbRepository
     {
 
-        private readonly ClimbBetterDbContext _dbcontext;
+        private readonly ClimbBetterDbContext _dbContext;
         public ClimbRepository(ClimbBetterDbContext dbcontext)
         {
-            _dbcontext = dbcontext;
+            _dbContext = dbcontext;
         }
 
         public async Task<List<Climb>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return await _dbcontext.Climbs
+            return await _dbContext.Climbs
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
         }
+
+        public async Task<Climb?> GetByIdAsync(
+    Guid id,
+    CancellationToken cancellationToken)
+{
+    return await _dbContext.Climbs
+        .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+}
     }
 }

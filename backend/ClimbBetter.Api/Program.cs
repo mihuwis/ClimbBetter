@@ -1,6 +1,5 @@
 using ClimbBetter.Application;
 using ClimbBetter.Infrastructure;
-using ClimbBetter.Api.Features.TrainingSessions.Endpoints;
 using ClimbBetter.Api.Features;
 using Scalar.AspNetCore;
 
@@ -24,7 +23,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.MapTrainingSessionEndpoints();
 app.MapApiEndpoints();
 
 app.Run();

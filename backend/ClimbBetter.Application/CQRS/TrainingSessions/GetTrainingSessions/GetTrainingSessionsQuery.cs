@@ -1,5 +1,5 @@
+using MediatR;
+
 namespace ClimbBetter.Application.CQRS.TrainingSessions.GetTrainingSessions;
 
-public class GetTrainingSessionsQuery
-{
-}
+public record GetTrainingSessionsQuery : IRequest<List<TrainingSessionListItemDto>>;

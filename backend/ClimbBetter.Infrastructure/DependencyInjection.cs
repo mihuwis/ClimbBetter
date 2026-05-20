@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IDifficultyRepository, DifficultyRepository>();
         services.AddScoped<IQualityRepository, QualityRepository>();
         services.AddScoped<IClimbRepository, ClimbRepository>();
+        services.AddScoped<ITrainingSessionRepository, TrainingSessionRepository>();
 
 
         return services;

@@ -5,5 +5,9 @@ namespace ClimbBetter.Domain.Interfaces
     public interface IClimbRepository
     {
         Task<List<Climb>> GetAllAsync(CancellationToken cancellationToken);
+
+            Task<Climb?> GetByIdAsync(
+                Guid id,
+                CancellationToken cancellationToken);
     }
 }

@@ -21,5 +21,13 @@ namespace ClimbBetter.Infrastructure.Repositories
                 .OrderBy(q => q.Id)
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<Quality?> GetByIdAsync(
+            int id,
+            CancellationToken cancellationToken)
+        {
+            return await _dbContext.Qualities
+                .FirstOrDefaultAsync(q => q.Id == id, cancellationToken);
+        }
     }
 }

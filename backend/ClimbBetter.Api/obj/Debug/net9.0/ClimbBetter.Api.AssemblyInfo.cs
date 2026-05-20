@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ad21436bebd0f012d6885ff1ceb0cada7965c370")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d88b841f4c310b24e0ac72a156bdb4d21d1fe72e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ClimbBetter.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

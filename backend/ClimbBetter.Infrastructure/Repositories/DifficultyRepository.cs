@@ -21,4 +21,12 @@ public class DifficultyRepository : IDifficultyRepository
             .OrderBy(d => d.Points)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Difficulty?> GetByIdAsync(
+    int id,
+    CancellationToken cancellationToken)
+{
+    return await _dbContext.Difficulties
+        .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+}
 }
