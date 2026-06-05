@@ -8,7 +8,7 @@ export type ProfileSummary = {
 export type ActivityFeedItem = {
   id: string;
   sessionName: string;
-  date: string;
+  sessionDate: string;
   discipline: string;
   location: string;
   score: number;

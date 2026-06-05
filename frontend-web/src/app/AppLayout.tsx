@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -11,9 +12,15 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="logo">ClimbBetter</div>
 
         <nav className="main-nav">
-          <a className="active" href="#">Dashboard</a>
-          <a href="#">Calendar</a>
-          <a href="#">Areas</a>
+          <NavLink to="/">Dashboard</NavLink>
+
+          <NavLink to="/calendar">
+            Calendar
+          </NavLink>
+
+          <NavLink to="/areas">
+            Areas
+          </NavLink>
         </nav>
 
         <div className="user-menu">Michał</div>

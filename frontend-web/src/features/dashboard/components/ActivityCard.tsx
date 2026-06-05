@@ -8,7 +8,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
   return (
     <article className="session-card">
       <p className="muted">
-        {activity.date} · {activity.discipline} · {activity.location}
+        {activity.sessionDate} · {activity.discipline} · {activity.location}
       </p>
 
       <h2>{activity.sessionName}</h2>
