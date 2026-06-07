@@ -25,3 +25,19 @@ export type DisciplineSummaryItem = {
   totalScore: number;
   totalMoves: number;
 };
+
+export type SessionEntry = {
+  id: string;
+  climbName: string;
+  grade: string;
+  style: string;
+  executedMoves: number;
+  totalMoves: number;
+  points: number;
+  notes?: string;
+};
+
+export type SessionDetails = ActivityFeedItem & {
+  duration: string;
+  entries: SessionEntry[];
+};

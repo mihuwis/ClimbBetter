@@ -1,4 +1,5 @@
 import type { ActivityFeedItem } from '../../../shared/types/dashboard.types';
+import { Link } from 'react-router-dom';
 
 type ActivityCardProps = {
   activity: ActivityFeedItem;
@@ -11,7 +12,11 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         {activity.sessionDate} · {activity.discipline} · {activity.location}
       </p>
 
-      <h2>{activity.sessionName}</h2>
+      <h2>
+        <Link to={`/sessions/${activity.id}`}>
+          {activity.sessionName}
+        </Link>
+      </h2>
 
       <div className="session-meta">
         <div>

@@ -1,7 +1,8 @@
 import type { 
     ProfileSummary,
     ActivityFeedItem,
-    DisciplineSummaryItem
+    DisciplineSummaryItem,
+    SessionDetails
  } from '../types/dashboard.types';
 
 
@@ -116,5 +117,42 @@ export const disciplineSummaryMock: DisciplineSummaryItem[] = [
     sessionsCount: 5,
     totalScore: 520,
     totalMoves: 180,
+  },
+];
+
+export const sessionDetailsMock: SessionDetails[] = [
+  {
+    ...activityFeedMock[0],
+    duration: '2h 15min',
+    entries: [
+      {
+        id: '1',
+        climbName: 'Skrzat',
+        grade: '6B',
+        style: 'Flash',
+        executedMoves: 4,
+        totalMoves: 4,
+        points: 52,
+      },
+      {
+        id: '2',
+        climbName: 'Dach',
+        grade: '7A',
+        style: 'Attempt',
+        executedMoves: 3,
+        totalMoves: 8,
+        points: 35,
+        notes: 'Good attempt, failed near the top.',
+      },
+      {
+        id: '3',
+        climbName: 'Zielony projekt',
+        grade: '7A+',
+        style: 'Attempt',
+        executedMoves: 5,
+        totalMoves: 10,
+        points: 38,
+      },
+    ],
   },
 ];

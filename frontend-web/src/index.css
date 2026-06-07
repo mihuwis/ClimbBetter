@@ -333,3 +333,42 @@ select {
 .calendar-day.outside-month {
   opacity: 0.35;
 }
+
+/* Areas  */
+
+
+.areas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.area-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.area-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  color: #475467;
+  font-size: 14px;
+}
+
+.area-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.area-tag {
+  padding: 6px 10px;
+  background: #eef2ff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
