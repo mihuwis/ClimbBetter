@@ -28,16 +28,22 @@ export type DisciplineSummaryItem = {
 
 export type SessionEntry = {
   id: string;
+  climbType: string;
   climbName: string;
   grade: string;
   style: string;
+  styleMultiplier: number;
+  totalLength: number;
   executedMoves: number;
-  totalMoves: number;
+  fragmentMultiplier: number;
+  gradePoints: number;
   points: number;
   notes?: string;
 };
 
 export type SessionDetails = ActivityFeedItem & {
-  duration: string;
+  goal: string;
+  method: string;
+  duration?: string;
   entries: SessionEntry[];
 };

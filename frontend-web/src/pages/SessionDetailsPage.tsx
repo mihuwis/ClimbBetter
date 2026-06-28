@@ -75,7 +75,7 @@ export function SessionDetailsPage() {
 
                   <div className="entry-metrics">
                     <span>
-                      {entry.executedMoves} / {entry.totalMoves} moves
+                      {entry.executedMoves} / {entry.totalLength} moves
                     </span>
                     <strong>{entry.points} pts</strong>
                   </div>
