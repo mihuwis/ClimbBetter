@@ -498,3 +498,10 @@ build/
 .flutter-plugins-dependencies
 .packages
 pubspec.lock
+!/frontend-mobile/pubspec.lock
+
+# --- Local development plans ---
+/app-plan.md
+/backend/backend-plan.md
+/frontend-web/front-plan.md
+/frontend-mobile/mobile-plan.md
