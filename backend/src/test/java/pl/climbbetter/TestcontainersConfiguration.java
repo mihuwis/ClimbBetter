@@ -1,4 +1,4 @@
-package pl.climbbetter.climbbetter_backend;
+package pl.climbbetter;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;

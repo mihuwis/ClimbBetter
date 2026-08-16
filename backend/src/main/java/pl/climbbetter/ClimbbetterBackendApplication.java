@@ -1,4 +1,4 @@
-package pl.climbbetter.climbbetter_backend;
+package pl.climbbetter;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
