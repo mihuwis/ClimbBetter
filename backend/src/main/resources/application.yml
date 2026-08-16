@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: climbbetter-backend
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
