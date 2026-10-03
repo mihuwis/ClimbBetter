@@ -1,0 +1,132 @@
+{
+  "snapshotDate": "2026-10-03",
+  "purpose": "Iteration 1: exact source copies, original files retained",
+  "files": [
+    {
+      "source": "docs/CB_Backend.md",
+      "snapshot": "source-snapshot/docs/CB_Backend.md",
+      "bytes": 22058,
+      "sha256": "d0e755ea7ee2f586d234a0d162ca4509f9f34baeb3eaa066cdd75c94f2878d43"
+    },
+    {
+      "source": "docs/CB_climbing_effort_valuation.md",
+      "snapshot": "source-snapshot/docs/CB_climbing_effort_valuation.md",
+      "bytes": 23995,
+      "sha256": "f4c43bbd0bc4fb59b981acbd9f90597086dc32d8acb02726f730252e5eda494a"
+    },
+    {
+      "source": "docs/CB_Front-web.md",
+      "snapshot": "source-snapshot/docs/CB_Front-web.md",
+      "bytes": 16007,
+      "sha256": "3026825ba2a9d6d12f3f4e68afa049bfa72d4446b0c39b2b8dae946cd25db4b6"
+    },
+    {
+      "source": "docs/CB_frontend-mobile.md",
+      "snapshot": "source-snapshot/docs/CB_frontend-mobile.md",
+      "bytes": 15432,
+      "sha256": "c4d74c3a26f5004397b7a141620cb810863877caa8a2b6281fd96015e96e418e"
+    },
+    {
+      "source": "docs/CB_model.md",
+      "snapshot": "source-snapshot/docs/CB_model.md",
+      "bytes": 28143,
+      "sha256": "042a861bf62ebc275b63869e378eba00d336a72c181c527a5c2a0d67ed13d60a"
+    },
+    {
+      "source": "docs/CB_project_decisions.md",
+      "snapshot": "source-snapshot/docs/CB_project_decisions.md",
+      "bytes": 1391,
+      "sha256": "b0586cbab45be46c48aec78d837c1a415c6b226e17341dd96bc250b5ff4b3221"
+    },
+    {
+      "source": "docs/CB_web_stage_1.md",
+      "snapshot": "source-snapshot/docs/CB_web_stage_1.md",
+      "bytes": 17221,
+      "sha256": "8d769a8935620771b855ab421de8dcb5e16e62c3498cd67def53a03d9a38cc11"
+    },
+    {
+      "source": "docs/old-doc/.gitkeep",
+      "snapshot": "source-snapshot/docs/old-doc/.gitkeep",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "docs/old-doc/api_db_plan_iteracji.md",
+      "snapshot": "source-snapshot/docs/old-doc/api_db_plan_iteracji.md",
+      "bytes": 29539,
+      "sha256": "7f75eafacc89c90f2b628bc41922211bf20882e731741fd6c719c2d1d5e1a402"
+    },
+    {
+      "source": "docs/old-doc/Api_v2_kanban.md",
+      "snapshot": "source-snapshot/docs/old-doc/Api_v2_kanban.md",
+      "bytes": 5480,
+      "sha256": "80bd631d52e9dc03264dd1b96ee7cb8badb51793ad0cad44f4721670dcdb5d9a"
+    },
+    {
+      "source": "docs/old-doc/backend-plan.md",
+      "snapshot": "source-snapshot/docs/old-doc/backend-plan.md",
+      "bytes": 51254,
+      "sha256": "7e936d9b6075fa55b6d080ca5075a5825ce425fa268469c323fd8ba41787dbda"
+    },
+    {
+      "source": "docs/old-doc/climbbetter_model_oceny_wspinaczki.md",
+      "snapshot": "source-snapshot/docs/old-doc/climbbetter_model_oceny_wspinaczki.md",
+      "bytes": 22100,
+      "sha256": "d6ac713c5a8bba291780e1e2228816cbdf100f7d2749f569327deaa6d6f580e8"
+    },
+    {
+      "source": "docs/old-doc/climbbetter_wymagania_api_baza.md",
+      "snapshot": "source-snapshot/docs/old-doc/climbbetter_wymagania_api_baza.md",
+      "bytes": 16440,
+      "sha256": "7761c9c197101727553a9a439b2016298d49d7d37ddcfa6488d967bceacc03f6"
+    },
+    {
+      "source": "docs/old-doc/frontend-product-design.md",
+      "snapshot": "source-snapshot/docs/old-doc/frontend-product-design.md",
+      "bytes": 5624,
+      "sha256": "f9da7d334039f6136db8c0c589808419515c7180aaa1d811aa86386c94680aa3"
+    },
+    {
+      "source": "docs/old-doc/project_goals_02.md",
+      "snapshot": "source-snapshot/docs/old-doc/project_goals_02.md",
+      "bytes": 7395,
+      "sha256": "27712831895b388790c4d356b860fbc95eef00bca3f1ae1794d5446904fe23f9"
+    },
+    {
+      "source": "docs/old-doc/spis_tresci.md",
+      "snapshot": "source-snapshot/docs/old-doc/spis_tresci.md",
+      "bytes": 2083,
+      "sha256": "9fe75806177881df4216c07d63519e5565e4ee466b0cff8ebea8a9ab2c417f5e"
+    },
+    {
+      "source": "app-plan.md",
+      "snapshot": "source-snapshot/app-plan.md",
+      "bytes": 3436,
+      "sha256": "406fd5c346b2e515f9a0e1f78bb078048f7671be6e8ef43ea68ec50d95fc7720"
+    },
+    {
+      "source": "frontend-web/front-plan.md",
+      "snapshot": "source-snapshot/frontend-web/front-plan.md",
+      "bytes": 2290,
+      "sha256": "902f38d67dcf224a53e968c4f1c6843487fb9263f762fab0f77d18ed999d356a"
+    },
+    {
+      "source": "frontend-mobile/mobile-plan.md",
+      "snapshot": "source-snapshot/frontend-mobile/mobile-plan.md",
+      "bytes": 6262,
+      "sha256": "a36079403d3c00a6085837fcb4dcffb1c289a1402d165786ee8f048e48081c17"
+    },
+    {
+      "source": ".agents/AGENTS.md",
+      "snapshot": "source-snapshot/.agents/AGENTS.md",
+      "bytes": 252,
+      "sha256": "b17dfe91d461ff2967a8e031b7e90c94beb5d3b2497c3b4654bfa7316f33d3fa"
+    },
+    {
+      "source": "README.md",
+      "snapshot": "source-snapshot/README.md",
+      "bytes": 247,
+      "sha256": "d3b20150af8e3e43b586ab128d5652c7b3887a7bb9763b964888baaa3af7f30d"
+    }
+  ]
+}

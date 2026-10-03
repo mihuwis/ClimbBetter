@@ -1,0 +1,61 @@
+# Stan projektu i prognoza
+
+Data oceny: 2026-10-03. Metoda: odczyt dokumentacji, plików kodu i ostatnich commitów. Nie uruchamiano aplikacji, buildów ani testów. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
+
+## Stan obszarów
+
+| Obszar                      | Co jest                                                                                                                         | Czego brakuje / co nie jest potwierdzone                                                           | Ocena                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Produkt i wycena ---------- | tabele, wzory, DEC-001–018, wymagania web z września; zatwierdzone jedno Area na sesję ---------------------------------------- | luki stylu/czasu/poziomu i 5–10 realnych zatwierdzonych golden cases ----------------------------- | specyfikacja zaawansowana, nadal pytania ---- |
+| Java ---------------------- | Maven/Spring Boot, moduły, profile, JPA validate, Clock UTC, testy kontekstu i Modulith --------------------------------------- | domena treningowa, kalkulator, endpointy, DTO, OpenAPI, bieżący wynik testów --------------------- | bootstrap częściowy ------------------------- |
+| PostgreSQL i infrastruktura | zależności i konfiguracja połączenia, konfiguracja Testcontainers ------------------------------------------------------------- | migracje, seedy, Compose; brak oceny działającej lokalnej bazy ----------------------------------- | brak wdrożonej persystencji treningów w Javie |
+| Web ----------------------- | Dashboard, Calendar, Areas, Session Details i routing ------------------------------------------------------------------------- | Record session, lokalny trwały szkic, integracja API, nowe metryki i grupowanie, testy komponentów | prototyp na mockach ------------------------- |
+| Mobile -------------------- | shell, Board, profil, formularz i widget test --------------------------------------------------------------------------------- | HTTP, trwałe dane, outbox, sync, rozdzielenie EDL/ruchów ----------------------------------------- | prototyp w pamięci -------------------------- |
+| Historia i audyt ---------- | opis snapshotów, client ID, archiwizacji i revisions -------------------------------------------------------------------------- | implementacja i testy scenariuszy ---------------------------------------------------------------- | zaplanowane --------------------------------- |
+| Auth / wydanie ------------ | opis kierunku OIDC i izolacji użytkownika ------------------------------------------------------------------------------------- | implementacja i zweryfikowane środowisko wdrożenia ----------------------------------------------- | późniejszy zakres --------------------------- |
+| Planowanie treningów ------ | kierunek osobnego modułu ------------------------------------------------------------------------------------------------------ | model, algorytm propozycji i implementacja ------------------------------------------------------- | odłożone ------------------------------------ |
+| Dokumentacja `.ai` -------- | iteracja 1 zweryfikowana; w iteracji 2 zapisano DEC-019–022: Git dla `.ai`, zasady współpracy, trwały szkic i Dashboard bez wykresu | pozostałe decyzje kontraktu APP-01/02 i kontrola spójności w iteracji 3 -------------------------- | iteracja 2 w toku --------------------------- |
+
+Dowody: [backend](../documentation/backend.md), [web](../documentation/frontend-web.md), [mobile](../documentation/frontend-mobile.md), [manifest źródeł](../archive/source-manifest.json). Istniejąca zmiana `.vscode/settings.json` nie należy do tej pracy.
+
+## Weryfikacja iteracji dokumentacji 1
+
+Utworzono wszystkie 21 wymaganych plików podstawowej struktury (wliczając główne AGENTS i README); razem z indeksem archiwum i czterema diagramami jest 26 aktywnych plików Markdown. Wszystkie 21 kopii źródłowych zgadza się z manifestem SHA-256. Pokryto każdy plik dawnego `docs`; pozostałe oryginały są niezmienione, a pierwotny główny README zachowano przed aktualizacją.
+
+Sprawdzono lokalne odsyłacze aktywnych dokumentów, kodowanie UTF-8 i domknięcie bloków kodu. `git diff --check` nie zgłosił błędów. Diagramy zapisano w Mermaid i sprawdzono na poziomie źródła; nie renderowano ich w przeglądarce. Historyczne odsyłacze wewnątrz wiernych kopii nie były przepisywane.
+
+## Stan iteracji dokumentacji 2
+
+Odpowiedzi użytkownika zamknęły OPEN-01, OPEN-02 i OPEN-05 oraz część OPEN-04 dotyczącą odzyskiwalnego szkicu. `.ai` wraz z archiwum ma wejść do Git, a oryginalne `docs` pozostają ignorowane. Asystent może czytać pliki i wykonywać uzgodnione testy, ale zmiany kodu nadal wymagają zatwierdzenia. Lokalny szkic musi przetrwać odświeżenie i niepotwierdzony zapis; liczba szkiców, konflikty wielu kart i backendowy preview pozostają otwarte. Dashboard pierwszego przyrostu pokazuje tekstowe metryki z prawdziwych danych bez wykresu.
+
+## Postęp wobec przyrostów
+
+| Przyrost                    | Stan                                      | Co rozstrzyga ukończenie                                      |
+| --------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
+| APP-01 — zapis/odczyt Java  | nieukończony; jest część fundamentu ----- | test rzeczywistego zapisu, obliczeń, rollbacku i idempotencji |
+| APP-02 — pełny przepływ web | nieukończony; jest prototyp ekranów ----- | powtarzalny zapis i ponowny odczyt treningu przez UI -------- |
+| APP-03–06 ----------------- | brak potwierdzonego ukończonego przyrostu | kryteria w roadmapie, do doprecyzowania przed pracą --------- |
+
+Nie podajemy procentu gotowości całej aplikacji: nie ma zamkniętego, oszacowanego zakresu, a makiety, dokumentacja i działające funkcje nie są równoważnymi jednostkami postępu.
+
+## Ile już trwało
+
+Brak wiarygodnej ewidencji godzin dotychczasowej pracy. Daty commitów i dokumentów są śladami zdarzeń, nie czasem wykonania. W [work-log](work-log.md) zapisano znane zdarzenia z nieznanym nakładem. Nie szacowano czasu użytkownika na podstawie odstępu między commitami.
+
+## Prognoza pozostałego czasu
+
+**Na dziś: niewyznaczona.** Brakuje uzgodnionego zakresu wydania, dostępności tygodniowej i danych o tempie realizacji. Nie ma podstaw do rzetelnej daty ukończenia ani liczbowego przedziału.
+
+W iteracji 2 określimy zakres prognozy (najpierw APP-01/02), rozbijemy tylko najbliższy przyrost na małe zadania i uzgodnimy sposób estymowania. Po zapisaniu rzeczywistych wyników można wyznaczyć przedział, np. pozostały nakład / dostępne godziny tygodniowo albo liczbę porównywalnych przyrostów / obserwowane tempo. Nie mieszamy obu jednostek na jednym wykresie.
+
+Prognoza będzie zawierała datę wyliczenia, przyjęty zakres, założenia dostępności, optymistyczny i ostrożny wariant oraz poziom niepewności. Zmiana zakresu wymaga aktualizacji prognozy. Czas oczekiwania na decyzje zapisujemy oddzielnie od pracy.
+
+## Burndown i burnup
+
+Burndown pokaże pozostałą oszacowaną pracę w ustalonej iteracji; burnup — ukończoną pracę na tle całego uzgodnionego zakresu. Dane będą pochodzić z [work-log](work-log.md), nie z liczby plików lub commitów.
+
+| Data       | Zakres                            | Jednostka   | Zakres całkowity | Ukończone    | Pozostałe     |
+| ---------- | --------------------------------- | ----------- | ---------------- | ------------ | ------------- |
+| 2026-10-03 | APP-01/02 — przed doprecyzowaniem | nieustalona | nieoszacowane -- | niezmierzone | nieoszacowane |
+
+Nie narysowano fikcyjnego trendu z jednego nieoszacowanego punktu. Po uzgodnieniu jednostki i zebraniu obserwacji dodamy wykres z tymi danymi. Nieznane wartości nie są zerem.
