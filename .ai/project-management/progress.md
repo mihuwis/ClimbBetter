@@ -1,6 +1,6 @@
 # Stan projektu i prognoza
 
-Data oceny: 2026-10-03. Metoda: odczyt dokumentacji, plików kodu i ostatnich commitów. Nie uruchamiano aplikacji, buildów ani testów. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
+Data aktualizacji: 2026-10-04; stan prac z 2026-10-03. Metoda: odczyt dokumentacji, kodu i wyników przekazanych przez użytkownika. Nie uruchamiano aplikacji ani pełnego zestawu testów. Celowany `FamiliarityBandTest` został potwierdzony wynikiem 7/7. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
 
 ## Stan obszarów
 
@@ -17,6 +17,8 @@ Data oceny: 2026-10-03. Metoda: odczyt dokumentacji, plików kodu i ostatnich co
 | Dokumentacja `.ai` -------- | iteracja 1 zweryfikowana; w iteracji 2 zapisano DEC-019–022: Git dla `.ai`, zasady współpracy, trwały szkic i Dashboard bez wykresu | pozostałe decyzje kontraktu APP-01/02 i kontrola spójności w iteracji 3 -------------------------- | iteracja 2 w toku --------------------------- |
 
 Dowody: [backend](../documentation/backend.md), [web](../documentation/frontend-web.md), [mobile](../documentation/frontend-mobile.md), [manifest źródeł](../archive/source-manifest.json). Istniejąca zmiana `.vscode/settings.json` nie należy do tej pracy.
+
+Aktualizacja 2026-10-03: powstał pierwszy mały element domeny Java, `FamiliarityBand`, wraz z testami granic i odrzucenia wartości ujemnej. Polecenie `./mvnw -Dtest=FamiliarityBandTest test` zakończyło się wynikiem 7/7. Nie oznacza to jeszcze implementacji kalkulatora ani agregatu sesji.
 
 ## Weryfikacja iteracji dokumentacji 1
 
@@ -40,7 +42,7 @@ Nie podajemy procentu gotowości całej aplikacji: nie ma zamkniętego, oszacowa
 
 ## Ile już trwało
 
-Brak wiarygodnej ewidencji godzin dotychczasowej pracy. Daty commitów i dokumentów są śladami zdarzeń, nie czasem wykonania. W [work-log](work-log.md) zapisano znane zdarzenia z nieznanym nakładem. Nie szacowano czasu użytkownika na podstawie odstępu między commitami.
+Użytkownik podał 4 godziny łącznej pracy 2026-10-03. Czas obejmuje głównie utworzenie ramy współpracy i folderów `.ai`, doprecyzowanie decyzji oraz pierwszy mały element domeny Java. Nie rozdzielamy tych 4 godzin arbitralnie między dokumentację i kod. Wcześniejszy historyczny nakład pozostaje nieznany; dat commitów nie traktujemy jako czasu pracy. Szczegóły zapisuje [work-log](work-log.md).
 
 ## Prognoza pozostałego czasu
 

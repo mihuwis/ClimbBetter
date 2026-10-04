@@ -1,6 +1,6 @@
 # Backend Java
 
-Status: bootstrap częściowo wykonany; przegląd statyczny 2026-10-03. Testów i aplikacji nie uruchamiano w tej iteracji dokumentacji.
+Status: bootstrap częściowo wykonany; przegląd 2026-10-03. Uruchomiono pierwszy celowany test domenowy; nie uruchamiano jeszcze pełnego zestawu testów ani aplikacji.
 
 ## Stan potwierdzony w repozytorium
 
@@ -16,6 +16,8 @@ Status: bootstrap częściowo wykonany; przegląd statyczny 2026-10-03. Testów 
 | Zależności -------- | MVC, validation, JPA, Flyway/PostgreSQL, Actuator, Modulith oraz testowe startery -------------------------------------------------------- |
 
 Wersje powyżej opisują pliki repozytorium, nie ocenę aktualności bibliotek. Istnienie zależności Actuator nie oznacza sprawdzenia odpowiedzi health. Testcontainers używa obecnie `postgres:latest`; wersja docelowa jest otwarta (`OPEN-13`).
+
+Pierwszy potwierdzony element domeny `training` to `FamiliarityBand.fromPriorContactCount`. Mapuje granice `0`, `1–10`, `11–20` i `21+`, a ujemną liczbę odrzuca. Celowany `FamiliarityBandTest` zakończył się wynikiem 7 testów, 0 failures i 0 errors. To dowód działania tej jednej reguły, nie całego modułu treningowego.
 
 ## Czego jeszcze nie ma w Javie
 
