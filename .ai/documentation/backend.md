@@ -1,6 +1,6 @@
 # Backend Java
 
-Status: bootstrap częściowo wykonany; przegląd 2026-10-03. Uruchomiono pierwszy celowany test domenowy; nie uruchamiano jeszcze pełnego zestawu testów ani aplikacji.
+Status: bootstrap częściowo wykonany; aktualizacja 2026-10-04. Pełny zestaw testów backendu przeszedł po uruchomieniu Docker Desktop; aplikacji nie uruchamiano osobno.
 
 ## Stan potwierdzony w repozytorium
 
@@ -17,7 +17,11 @@ Status: bootstrap częściowo wykonany; przegląd 2026-10-03. Uruchomiono pierws
 
 Wersje powyżej opisują pliki repozytorium, nie ocenę aktualności bibliotek. Istnienie zależności Actuator nie oznacza sprawdzenia odpowiedzi health. Testcontainers używa obecnie `postgres:latest`; wersja docelowa jest otwarta (`OPEN-13`).
 
+PostgreSQL testowy nie jest opisany przez `Dockerfile` ani Compose. Tworzy go programowo `TestcontainersConfiguration`, a `@ServiceConnection` podłącza go do kontekstu Spring Boot. Wymaga to uruchomionego Docker Desktop przed testem. Jest to tymczasowa baza testowa bez skonfigurowanego trwałego wolumenu; osobne, powtarzalne środowisko `local` nadal wymaga decyzji OPEN-13.
+
 Pierwszy potwierdzony element domeny `training` to `FamiliarityBand.fromPriorContactCount`. Mapuje granice `0`, `1–10`, `11–20` i `21+`, a ujemną liczbę odrzuca. Celowany `FamiliarityBandTest` zakończył się wynikiem 7 testów, 0 failures i 0 errors. To dowód działania tej jednej reguły, nie całego modułu treningowego.
+
+Pełne `./mvnw test` z 2026-10-04 wykonało 10 testów: 7 dla `FamiliarityBand`, 2 dla kontekstu Spring i zegara UTC oraz 1 dla granic modułów. Wszystkie zakończyły się bez failures, errors i skipped. Test kontekstu uruchomił PostgreSQL przez Testcontainers; wynik potwierdza bootstrap testowy, nie migracje ani zapis domenowy, których jeszcze nie ma.
 
 ## Czego jeszcze nie ma w Javie
 

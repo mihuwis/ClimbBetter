@@ -28,7 +28,7 @@ Warunki ukończenia przyrostów: [roadmap](roadmap.md). Faktyczny stan: [progres
 
 ## Start dnia pracy 
 
-Dzisiaj pracujemy nad backendem Java, mam około godziny. Przeczytaj AGENTS.md, .ai\documentation\decisions.md, priorytety, postęp i potrzebne dokumenty oraz sprawdź obecny kod. Ja koduję i uruchamiam testy. Ty wyjaśniasz, robisz review i aktualizujesz dokumentację po potwierdzonych zmianach. Prowadź mnie po jednym małym kroku. Pamiętaj ze uczę sie java i react, nie znam jeszcze wszystkich mozliwosci tych jezyków. Pomagaj.
+Dzisiaj pracujemy nad backendem Java, mam około 2 godziny. Przeczytaj AGENTS.md, .ai\documentation\decisions.md, priorytety, postęp i potrzebne dokumenty oraz sprawdź obecny kod. Przypomnij mi o uruchomieniu Docker Desktop i sprawdzeniu `docker version` przed testami integracyjnymi: Testcontainers uruchamia PostgreSQL w kontenerze. Ja koduję i uruchamiam testy. Ty wyjaśniasz, robisz review i aktualizujesz dokumentację po potwierdzonych zmianach. Prowadź mnie po jednym małym kroku. Pamiętaj, że uczę się Javy i Reacta i nie znam jeszcze wszystkich możliwości tych języków. Pomagaj.
 
 
 ## Koniec dnia pracy

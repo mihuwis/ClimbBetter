@@ -30,7 +30,11 @@ Projekt deklaruje Java 21; wrapper pobiera Maven zgodnie z `backend/.mvn/wrapper
 .\mvnw.cmd verify
 ```
 
-Test kontekstu korzysta z Testcontainers PostgreSQL i wymaga działającego środowiska kontenerów. Pobranie zależności lub obrazu może wymagać sieci. Aktualna konfiguracja testu używa nieprzypiętego `postgres:latest`; do wyboru jest wersja powtarzalna (`OPEN-13`). Nie stwierdzono aktualnego wyniku tych testów.
+Test kontekstu korzysta z Testcontainers PostgreSQL i wymaga wcześniej uruchomionego Docker Desktop. Na początku nowego dnia, przed pełnym `./mvnw test`, sprawdzamy `docker version`; wynik powinien zawierać sekcje `Client` i `Server`. Pobranie zależności lub obrazu może wymagać sieci. Aktualna konfiguracja testu używa nieprzypiętego `postgres:latest`; do wyboru jest wersja powtarzalna (`OPEN-13`).
+
+Repozytorium nie potrzebuje obecnie `Dockerfile` ani Compose do tych testów. `TestcontainersConfiguration` w kodzie testowym deklaruje `PostgreSQLContainer` na podstawie publicznego obrazu `postgres:latest`. Podczas uruchomienia testu biblioteka prosi działający Docker o utworzenie tymczasowego kontenera, a `@ServiceConnection` przekazuje parametry połączenia do Spring Boot, Flyway i JPA. Nie skonfigurowano trwałego wolumenu ani stałego portu; baza służy testowi i jej danych nie traktujemy jako lokalnego środowiska developerskiego.
+
+Pierwsza próba pełnego uruchomienia z 2026-10-04 wykazała brak działającego Dockera. Po uruchomieniu Docker Desktop ponowne `./mvnw test` zakończyło się sukcesem: `FamiliarityBandTest` 7/7, testy kontekstu i zegara 2/2 oraz test granic modułów 1/1. Łącznie wykonano 10 testów bez failures, errors i skipped.
 
 Profil `local` odczytuje konfigurację bazy z otoczenia. Nazwy to `CB_DB_URL`, `CB_DB_USERNAME` oraz nazwa zmiennej wskazana przy `password` w [application-local.yml](../../backend/src/main/resources/application-local.yml). Nie kopiujemy wartości lokalnych poświadczeń do dokumentacji.
 

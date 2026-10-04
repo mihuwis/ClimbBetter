@@ -1,6 +1,6 @@
 # Stan projektu i prognoza
 
-Data aktualizacji: 2026-10-04; stan prac z 2026-10-03. Metoda: odczyt dokumentacji, kodu i wyników przekazanych przez użytkownika. Nie uruchamiano aplikacji ani pełnego zestawu testów. Celowany `FamiliarityBandTest` został potwierdzony wynikiem 7/7. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
+Data aktualizacji: 2026-10-04. Metoda: odczyt dokumentacji, kodu i raportów Surefire po uruchomieniu testów przez użytkownika. Nie uruchamiano aplikacji osobno. Pełne `./mvnw test` wykonało 10 testów bez failures, errors i skipped. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
 
 ## Stan obszarów
 
@@ -19,6 +19,8 @@ Data aktualizacji: 2026-10-04; stan prac z 2026-10-03. Metoda: odczyt dokumentac
 Dowody: [backend](../documentation/backend.md), [web](../documentation/frontend-web.md), [mobile](../documentation/frontend-mobile.md), [manifest źródeł](../archive/source-manifest.json). Istniejąca zmiana `.vscode/settings.json` nie należy do tej pracy.
 
 Aktualizacja 2026-10-03: powstał pierwszy mały element domeny Java, `FamiliarityBand`, wraz z testami granic i odrzucenia wartości ujemnej. Polecenie `./mvnw -Dtest=FamiliarityBandTest test` zakończyło się wynikiem 7/7. Nie oznacza to jeszcze implementacji kalkulatora ani agregatu sesji.
+
+Weryfikacja 2026-10-04: po uruchomieniu Docker Desktop pełne `./mvnw test` zakończyło się sukcesem. Potwierdzono 7 testów `FamiliarityBand`, 2 testy kontekstu Spring i zegara UTC oraz 1 test granic Modulith. PostgreSQL został uruchomiony tymczasowo przez Testcontainers.
 
 ## Weryfikacja iteracji dokumentacji 1
 

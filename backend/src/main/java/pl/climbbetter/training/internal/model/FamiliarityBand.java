@@ -11,14 +11,13 @@ public enum FamiliarityBand {
         if (priorContactCount < 0) {throw new IllegalArgumentException("Count cannot be negative");}
         if(priorContactCount == 0){
             return FIRST_CONTACT;
-        } else if(priorContactCount <=10){
+        } 
+        if(priorContactCount <=10){
             return LOW;
-        } else if(priorContactCount <=20){
+        } 
+        if(priorContactCount <=20){
             return NORMAL;
         } 
         return ESTABLISHED;
     }
-
 }
-
-

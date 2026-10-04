@@ -18,6 +18,8 @@ Data utworzenia: 2026-10-03. To ewidencja zdarzeń i rzeczywiście znanego czasu
 
 Potwierdzenie APP-01 z 2026-10-03: użytkownik zaimplementował `FamiliarityBand.fromPriorContactCount` i uruchomił celowany test granic oraz wyjątku. Wynik: 7 testów, 0 failures, 0 errors. Zakres dowodu obejmuje wyłącznie tę regułę domenową.
 
+Weryfikacja APP-01 z 2026-10-04: po uruchomieniu Docker Desktop pełne `./mvnw test` wykonało 10 testów bez failures, errors i skipped. Zakres obejmuje `FamiliarityBand`, kontekst Spring, zegar UTC i granice Modulith; nie obejmuje jeszcze migracji ani zapisu treningu.
+
 ## Ewidencja kolejnych prac
 
 Każdy nowy wpis powinien mieć: datę, ID przyrostu/zadania, krótki rezultat, status przed/po, oszacowanie (jeśli przyjęte), rzeczywisty nakład, źródło pomiaru i wynik sprawdzenia. Oddzielamy czas użytkownika, pracę asystenta i czas oczekiwania. Jeśli czas nie był mierzony lub podany, wpisujemy `nieznany`.
