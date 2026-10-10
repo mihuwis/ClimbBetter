@@ -1,0 +1,4 @@
+CREATE SCHEMA identity;
+CREATE SCHEMA catalog;
+CREATE SCHEMA training;
+CREATE SCHEMA reporting;

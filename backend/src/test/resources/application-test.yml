@@ -1,6 +1,10 @@
 spring:
   main:
     banner-mode: off
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/test-migration
 
 logging:
   level:
