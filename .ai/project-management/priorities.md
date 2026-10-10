@@ -1,6 +1,6 @@
 # Bieżące priorytety
 
-Data aktualizacji: 2026-10-04. To krótka lista zakresu, nie zestaw poleceń do wykonania jednocześnie.
+Data aktualizacji: 2026-10-10. To krótka lista zakresu, nie zestaw poleceń do wykonania jednocześnie.
 
 ## TO DO NOW
 
@@ -10,7 +10,16 @@ Data aktualizacji: 2026-10-04. To krótka lista zakresu, nie zestaw poleceń do 
 
 Ustalone: jedna sesja obejmuje jedno Area (DEC-018); `.ai` jest wersjonowane w Git (DEC-019); asystent może czytać i wykonywać uzgodnione testy, lecz nie zmienia kodu bez zatwierdzenia (DEC-020); lokalny odzyskiwalny szkic jest wymagany (DEC-021); pierwszy Dashboard używa tekstowych metryk bez dekoracyjnego wykresu (DEC-022).
 
-Najbliższy konkretny krok: na początku następnej sesji użytkownik uruchamia pełny zestaw testów backendu poleceniem `./mvnw test`. Wynik pokaże, czy nowy `FamiliarityBand` nie naruszył istniejącego bootstrapu, testu UTC i granic modułów. Dopiero po tym wybieramy kolejny mały typ domenowy. Preview oraz polityka wielu kart pozostają otwartą częścią `OPEN-04`. Kod pisze użytkownik.
+Pierwszy pion odczytu Dashboardu jest potwierdzony: `GET /api/v1/dashboard/sessions`, `JdbcClient`, migracje `V1`–`V5`, integracyjny PostgreSQL i trwałe środowisko local. Następny krok jest wybrany: dokończyć `TrainingEntryCommand`, a następnie zbudować `POST /api/v1/training/sessions`, transakcyjny zapis i test `POST → PostgreSQL → GET Dashboard`. Pierwszym scenariuszem akceptacyjnym jest sesja boulderowa Bronx opisana w [training](../business/training.md).
+
+Plan następnej sesji:
+
+1. uruchomić Docker Desktop i sprawdzić `docker version`;
+2. dodać brakujący `TrainingEntryCommand` i wykonać czystą kompilację;
+3. ustalić minimalne resolvery dla wyceny, profilu, historii stylu i poziomu wymagane przez scenariusz Bronx, bez przyjmowania loadu z frontendu;
+4. dodać kontroler, serwis transakcyjny oraz zapis sesji i wpisów przez `JdbcClient`;
+5. potwierdzić jednym testem integracyjnym zapis, podsumowanie i późniejszy odczyt Dashboardu;
+6. dopiero po tym rozszerzyć read model o średnią intensywność i uzgodnione rekordy.
 
 ## TO DO LATER
 
@@ -33,4 +42,4 @@ Dzisiaj pracujemy nad backendem Java, mam około 2 godziny. Przeczytaj AGENTS.md
 
 ## Koniec dnia pracy
 
-Sesja z 2026-10-03 zakończona po 4 godzinach pracy. Duża część czasu objęła utworzenie ramy współpracy i dokumentacji `.ai`; szczegóły oraz granice potwierdzenia zapisano w [work-log](work-log.md).
+Sesja z 2026-10-10 zakończona po około 5 godzinach łącznej pracy. Potwierdzono model obliczeń i agregacji, rozgrzewkę, `V5` oraz integracyjny odczyt po migracji. Następna sesja zaczyna się od brakującego `TrainingEntryCommand`, a celem jest zapis scenariusza Bronx i odczyt jego podsumowania na Dashboardzie. Szczegóły oraz granice potwierdzenia zapisano w [work-log](work-log.md).

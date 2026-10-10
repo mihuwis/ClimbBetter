@@ -1,14 +1,14 @@
 # Stan projektu i prognoza
 
-Data aktualizacji: 2026-10-04. Metoda: odczyt dokumentacji, kodu i raportów Surefire po uruchomieniu testów przez użytkownika. Nie uruchamiano aplikacji osobno. Pełne `./mvnw test` wykonało 10 testów bez failures, errors i skipped. „Jest w kodzie” nie oznacza „sprawdzone w działaniu”.
+Data aktualizacji: 2026-10-10. Metoda: odczyt kodu, potwierdzone polecenia użytkownika i raporty testów. Pełny zestaw testów przeszedł po dodaniu modelu obliczeń i agregacji. Następnie celowany test integracyjny Dashboardu potwierdził migrację `V5`; początkowy błąd dotyczył wyłącznie oczekiwanej skali `BigDecimal` po przejściu z dwóch do czterech miejsc.
 
 ## Stan obszarów
 
 | Obszar                      | Co jest                                                                                                                         | Czego brakuje / co nie jest potwierdzone                                                           | Ocena                                         |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Produkt i wycena ---------- | tabele, wzory, DEC-001–018, wymagania web z września; zatwierdzone jedno Area na sesję ---------------------------------------- | luki stylu/czasu/poziomu i 5–10 realnych zatwierdzonych golden cases ----------------------------- | specyfikacja zaawansowana, nadal pytania ---- |
-| Java ---------------------- | Maven/Spring Boot, moduły, profile, JPA validate, Clock UTC, testy kontekstu i Modulith --------------------------------------- | domena treningowa, kalkulator, endpointy, DTO, OpenAPI, bieżący wynik testów --------------------- | bootstrap częściowy ------------------------- |
-| PostgreSQL i infrastruktura | zależności i konfiguracja połączenia, konfiguracja Testcontainers ------------------------------------------------------------- | migracje, seedy, Compose; brak oceny działającej lokalnej bazy ----------------------------------- | brak wdrożonej persystencji treningów w Javie |
+| Java ---------------------- | bootstrap, GET Dashboardu, kalkulatory EDL/intensywności/loadu, model rozgrzewki, agregacja metryk, szkic komendy sesji i testy domenowe/integracyjne | brakujący `TrainingEntryCommand`, zapis sesji, resolvery słowników/historii, Details i OpenAPI | odczyt i fundament obliczeń działają -------- |
+| PostgreSQL i infrastruktura | Flyway `V1`–`V5`, tabele użytkowników, Area, sesji i wpisów, testowy/local seed, PostgreSQL 17.6 w Testcontainers i Compose local | słowniki wycen/profili, katalog wspinaczek, repozytorium zapisu i dane utworzone przez API ---------- | fundament zapisu istnieje, brak `POST` ------ |
 | Web ----------------------- | Dashboard, Calendar, Areas, Session Details i routing ------------------------------------------------------------------------- | Record session, lokalny trwały szkic, integracja API, nowe metryki i grupowanie, testy komponentów | prototyp na mockach ------------------------- |
 | Mobile -------------------- | shell, Board, profil, formularz i widget test --------------------------------------------------------------------------------- | HTTP, trwałe dane, outbox, sync, rozdzielenie EDL/ruchów ----------------------------------------- | prototyp w pamięci -------------------------- |
 | Historia i audyt ---------- | opis snapshotów, client ID, archiwizacji i revisions -------------------------------------------------------------------------- | implementacja i testy scenariuszy ---------------------------------------------------------------- | zaplanowane --------------------------------- |
@@ -21,6 +21,8 @@ Dowody: [backend](../documentation/backend.md), [web](../documentation/frontend-
 Aktualizacja 2026-10-03: powstał pierwszy mały element domeny Java, `FamiliarityBand`, wraz z testami granic i odrzucenia wartości ujemnej. Polecenie `./mvnw -Dtest=FamiliarityBandTest test` zakończyło się wynikiem 7/7. Nie oznacza to jeszcze implementacji kalkulatora ani agregatu sesji.
 
 Weryfikacja 2026-10-04: po uruchomieniu Docker Desktop pełne `./mvnw test` zakończyło się sukcesem. Potwierdzono 7 testów `FamiliarityBand`, 2 testy kontekstu Spring i zegara UTC oraz 1 test granic Modulith. PostgreSQL został uruchomiony tymczasowo przez Testcontainers.
+
+Weryfikacja 2026-10-10: powstał `GET /api/v1/dashboard/sessions` z read modelem i filtrowaniem przez `CurrentUserProvider`. Local zastosował `V1`–`V4`, a ręczny GET zwrócił `[]`. Później dodano model klasyfikacji, ruchów, rozgrzewki, kalkulatory EDL/intensywności/loadów i agregację sesji; użytkownik potwierdził pełny zielony zestaw testów. `V5` utworzyła `training_entries` i zwiększyła skalę loadów do czterech miejsc; celowany test integracyjny przeszedł po aktualizacji oczekiwanych wartości. `CreateTrainingSessionCommand` istnieje, lecz wskazany `TrainingEntryCommand` nie jest obecny w aktualnych źródłach, więc komenda zapisu nie jest jeszcze kompletna.
 
 ## Weryfikacja iteracji dokumentacji 1
 
@@ -36,7 +38,7 @@ Odpowiedzi użytkownika zamknęły OPEN-01, OPEN-02 i OPEN-05 oraz część OPEN
 
 | Przyrost                    | Stan                                      | Co rozstrzyga ukończenie                                      |
 | --------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
-| APP-01 — zapis/odczyt Java  | nieukończony; jest część fundamentu ----- | test rzeczywistego zapisu, obliczeń, rollbacku i idempotencji |
+| APP-01 — zapis/odczyt Java  | nieukończony; działa pierwszy odczyt Dashboardu | test rzeczywistego zapisu, obliczeń, rollbacku i idempotencji |
 | APP-02 — pełny przepływ web | nieukończony; jest prototyp ekranów ----- | powtarzalny zapis i ponowny odczyt treningu przez UI -------- |
 | APP-03–06 ----------------- | brak potwierdzonego ukończonego przyrostu | kryteria w roadmapie, do doprecyzowania przed pracą --------- |
 
@@ -44,7 +46,7 @@ Nie podajemy procentu gotowości całej aplikacji: nie ma zamkniętego, oszacowa
 
 ## Ile już trwało
 
-Użytkownik podał 4 godziny łącznej pracy 2026-10-03. Czas obejmuje głównie utworzenie ramy współpracy i folderów `.ai`, doprecyzowanie decyzji oraz pierwszy mały element domeny Java. Nie rozdzielamy tych 4 godzin arbitralnie między dokumentację i kod. Wcześniejszy historyczny nakład pozostaje nieznany; dat commitów nie traktujemy jako czasu pracy. Szczegóły zapisuje [work-log](work-log.md).
+Użytkownik podał 4 godziny pracy 2026-10-03 oraz około 5 godzin łącznie dla sesji 2026-10-10. Drugi pomiar zastępuje wcześniejszą cząstkową informację o około 3 godzinach tego dnia. Wcześniejszy historyczny nakład pozostaje nieznany; dat commitów nie traktujemy jako czasu pracy. Szczegóły zapisuje [work-log](work-log.md).
 
 ## Prognoza pozostałego czasu
 

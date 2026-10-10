@@ -20,13 +20,16 @@ Potwierdzenie APP-01 z 2026-10-03: użytkownik zaimplementował `FamiliarityBand
 
 Weryfikacja APP-01 z 2026-10-04: po uruchomieniu Docker Desktop pełne `./mvnw test` wykonało 10 testów bez failures, errors i skipped. Zakres obejmuje `FamiliarityBand`, kontekst Spring, zegar UTC i granice Modulith; nie obejmuje jeszcze migracji ani zapisu treningu.
 
+Weryfikacja APP-01 z 2026-10-10: pełne `./mvnw test` wykonało 13 testów bez failures, errors i skipped. Lokalna aplikacja zastosowała migracje `V1`–`V4` w trwałym PostgreSQL 17.6, a ręczny GET Dashboardu zwrócił pustą listę z bazy.
+
 ## Ewidencja kolejnych prac
 
 Każdy nowy wpis powinien mieć: datę, ID przyrostu/zadania, krótki rezultat, status przed/po, oszacowanie (jeśli przyjęte), rzeczywisty nakład, źródło pomiaru i wynik sprawdzenia. Oddzielamy czas użytkownika, pracę asystenta i czas oczekiwania. Jeśli czas nie był mierzony lub podany, wpisujemy `nieznany`.
 
-| Data       | ID              | Rezultat                                                                 | Status                          | Estymata | Czas użytkownika | Czas asystenta  | Weryfikacja                                                          |
-| ---------- | --------------- | ------------------------------------------------------------------------ | ------------------------------- | -------- | ---------------- | --------------- | -------------------------------------------------------------------- |
-| 2026-10-03 | DOC-02 / APP-01 | rama `.ai`, decyzje DEC-018–022 i `FamiliarityBand` z testami            | sesja zakończona; prace trwają  | brak     | 4 h              | nieznany        | archiwum 21/21, linki, kompilacja oraz `FamiliarityBandTest` 7/7     |
+| Data       | ID              | Rezultat                                                                      | Status                          | Estymata | Czas użytkownika | Czas asystenta | Weryfikacja                                                      |
+| ---------- | --------------- | ----------------------------------------------------------------------------- | ------------------------------- | -------- | ---------------- | -------------- | ---------------------------------------------------------------- |
+| 2026-10-03 | DOC-02 / APP-01 | rama `.ai`, decyzje DEC-018–022 i `FamiliarityBand` z testami                 | sesja zakończona; prace trwają  | brak     | 4 h              | nieznany       | archiwum 21/21, linki, kompilacja i `FamiliarityBandTest` 7/7    |
+| 2026-10-10 | APP-01          | GET Dashboardu, local PostgreSQL, model obliczeń i agregacji, rozgrzewka, migracja wpisów `V5` oraz początek komendy zapisu | odczyt i obliczenia działają; `POST` pozostaje | brak | około 5 h łącznie | nieznany | pełny zestaw testów przeszedł przed `V5`; po `V5` przeszedł test integracyjny Dashboardu; komenda wpisu nie jest jeszcze obecna w źródłach |
 
 ## Obserwacje do wykresów
 

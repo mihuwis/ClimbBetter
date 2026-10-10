@@ -94,11 +94,13 @@ Ustalone 2026-10-03: jedna sesja obejmuje jedno Area — rejon lub ściankę wsp
 
 ### Próba lub przejście
 
-Użytkownik widzi/uzupełnia wycenę, profil wysiłku, całkowitą liczbę ruchów, wykonane ruchy i rezultat. Ukończenie bez odpadnięcia jest jawną deklaracją. `12/12` ruchów samo nie dowodzi czystego przejścia.
+Użytkownik widzi/uzupełnia wycenę, profil wysiłku, całkowitą liczbę ruchów, wykonane ruchy i rezultat. Ukończenie bez odpadnięcia jest jawną deklaracją. `12/12` ruchów samo nie dowodzi czystego przejścia. `executedMoves` liczy rzeczywiście wykonaną pracę, również powtórzone ruchy po odpadnięciu, dlatego może przekroczyć `totalMoves`; wpis `12/20` jest poprawną próbą.
 
 Backend wyprowadza znajomość z wcześniejszych wpisów tej samej wspinaczki, uwzględniając wcześniejsze wpisy bieżącej sesji. Obowiązuje [model wyceny](grading-and-scoring.md), w tym rozdzielenie rezultatu, OS/Flash/RP i familiarity band.
 
-Brak wpisu w historii nie dowodzi OS. OS i Flash wymagają deklaracji użytkownika; użytkownik mógł też wspinać się tu przed rozpoczęciem korzystania z aplikacji. Propozycja UI: sugestia trybu z krótkim uzasadnieniem i możliwością korekty. Istniejący wymóg potwierdzenia/audytu konfliktu OS/Flash z historią pozostaje.
+Brak wpisu w historii nie jest nieodwracalnym dowodem OS, bo użytkownik mógł wspinać się tu przed rozpoczęciem korzystania z aplikacji. W szybkim formularzu ukończony, nowo nazwany bald otrzymuje jednak edytowalną sugestię OS (DEC-028). Dzięki temu typowy nowy problem nie wymaga dodatkowego pytania, a użytkownik nadal może poprawić tryb. Istniejący wymóg potwierdzenia/audytu konfliktu OS/Flash z zapisaną historią pozostaje.
+
+Jeżeli użytkownik nie poda długości balda, formularz proponuje `totalMoves = 8` (DEC-027). Domyślna wartość nie zastępuje wiedzy użytkownika: krótki bald może mieć np. 4 ruchy, a projekt 6–10. `executedMoves` zawsze opisuje wykonaną pracę i dla nieukończonej próby może wynosić np. 2–4.
 
 `Repeat` może być etykietą ponownego przejścia znanej, wcześniej ukończonej drogi; nie zastępuje `ascentMode` ani nie oznacza automatycznie `ESTABLISHED`. Duża liczba prób i wcześniejsze ukończenie to różne informacje.
 
@@ -111,6 +113,19 @@ Szybkie akcje:
 | Dodaj z tego samego rejonu ------- | Area ------------------------------------- | wybór sektora/wspinaczki -------------------- |
 
 Kopiowanie kontekstu nie kopiuje sukcesu, OS ani wykonanych ruchów. Korekta parametrów wpisu nie edytuje automatycznie katalogowej drogi.
+
+### Scenariusz akceptacyjny: sesja boulderowa Bronx
+
+Najbliższy pion zapisu ma obsłużyć bez zbędnych pytań następującą sesję:
+
+1. Użytkownik wybiera lub tworzy Area `Bronx` i rozpoczyna lokalny szkic sesji.
+2. Dodaje rozgrzewkę z `executedMoves = 20`; wpis nie ma wyceny, EDL ani loadu.
+3. Dodaje trzy ukończone, nazwane baldy o wycenach `5C` lub `5C+`. Nie ma ich wcześniejszej historii, więc formularz proponuje OS i po 8 ruchów; użytkownik może poprawić obie wartości.
+4. Dodaje dwa ukończone baldy `6A`, które istnieją już w historii. Backend sugeruje RP na podstawie wcześniejszych kontaktów; jeden z problemów ma rzeczywistą długość 4 ruchów zamiast domyślnych 8.
+5. Dodaje próby projektów `6C`: wykonuje w nich po 2–4 ruchy, podczas gdy całe problemy mają 6–10 ruchów. Każda próba jest osobnym, uporządkowanym wpisem.
+6. Kończy sesję. Backend oblicza wpisy i podsumowanie, zapisuje całość atomowo, a Dashboard odczytuje zapisaną sesję.
+
+Podstawowe podsumowanie pokazuje sumę wykonanych ruchów, `classicLoad`, `adjustedLoad` i średnią intensywność ocenianych ruchów. Rekordy pojawiają się tylko wtedy, gdy mają podstawę w danych; kandydaci dla tego przepływu to największa liczba ruchów, największa praca na trudnych problemach i najwyższe RP. Dokładne nazwy oraz definicje rekordów trzeba ustalić przed rozszerzeniem DTO Dashboardu; nie wolno mieszać skal ani przedstawiać nieukończonej próby jako rekordu przejścia.
 
 Propozycje angielskich etykiet, niezależne od istniejących kodów profili:
 

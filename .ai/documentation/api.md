@@ -1,10 +1,10 @@
 # API i przepływ danych
 
-Status: kontrakt do dopracowania w iteracji dokumentacji 2; nie jest to opis działających endpointów ani gotowe OpenAPI. Data: 2026-10-03.
+Status: częściowo wdrożony kontrakt Dashboardu; bez gotowego OpenAPI. Aktualizacja: 2026-10-10.
 
 ## Stan i odpowiedzialność
 
-W Javie nie ma jeszcze biznesowych endpointów. Poniższe operacje wynikają z zatwierdzonych potrzeb produktu. Nazwy URL, dokładne DTO, reprezentacja decimal, limity i paginacja wymagają ustalenia (`OPEN-14`). Starszy plan proponował prefiks `/api/v1`, idempotentny POST ukończonej sesji i odpowiedzi `ProblemDetail`.
+W Javie działa `GET /api/v1/dashboard/sessions`. Rozpoczęto kontrakt zapisu przez `CreateTrainingSessionCommand`, lecz brakujący `TrainingEntryCommand`, kontroler, serwis i repozytorium oznaczają, że `POST` jeszcze nie istnieje. Dokładne DTO Details, błędy oraz docelowa paginacja nadal wymagają ustalenia (`OPEN-14`).
 
 | Operacja                     | Potrzeba                                               | Status                                      |
 | ---------------------------- | ------------------------------------------------------ | ------------------------------------------- |
@@ -12,7 +12,7 @@ W Javie nie ma jeszcze biznesowych endpointów. Poniższe operacje wynikają z z
 | Wyszukanie Area/Sector/Climb | filtrowanie po miejscu, historia użycia, stabilne ID   | wymagana; szczegóły dopasowania proponowane |
 | Podgląd obliczeń szkicu ---- | wynik bez tworzenia sesji i draftów katalogu w bazie   | propozycja `OPEN-04` ---------------------- |
 | Utworzenie ukończonej sesji  | atomowy zapis wszystkich wpisów ---------------------- | wymagana ---------------------------------- |
-| Lista sesji ---------------- | dane kart Dashboardu --------------------------------- | wymagana ---------------------------------- |
+| Lista sesji ---------------- | dane kart Dashboardu --------------------------------- | pierwszy GET wdrożony i przetestowany ----- |
 | Szczegóły sesji ------------ | grupowanie wspinaczek, uporządkowane próby i snapshoty | wymagana; kształt odczytu `OPEN-06` ------- |
 | Edycja / reewaluacja ------- | korekta historii z audytem --------------------------- | późniejszy przyrost ----------------------- |
 | Calendar / profile / sync -- | dalsze przekroje i integracja mobile ----------------- | późniejsze przyrosty ---------------------- |
@@ -54,7 +54,13 @@ Plan błędów: `ProblemDetail`, walidacja per pole/wpis, rozróżnienie braku d
 
 ## Odczyt dla Dashboardu
 
+Wdrożony endpoint `GET /api/v1/dashboard/sessions` zwraca maksymalnie 20 sesji bieżącego użytkownika, sortowanych po `sessionDate` i `createdAt` malejąco. Nie przyjmuje `userId`; serwis pobiera go przez `CurrentUserProvider`. Read model zawiera `sessionId`, `sessionName`, `sessionDate`, `areaName`, `durationMinutes`, `totalMoves`, `classicLoad`, `adjustedLoad`, `maxBoulderGrade` i `maxRouteGrade`.
+
+Kontroler i serializacja mają test MVC, a zapytanie ma test integracyjny z PostgreSQL. Pusta lokalna baza zwraca `[]`. Nie wdrożono jeszcze paginacji sterowanej przez klienta, odpowiedzi błędów ani danych dla pozostałych sekcji Dashboardu.
+
 Potrzebne są stabilne ID sesji, nazwa, lokalna data, miejsce, czas i podsumowanie z `adjustedLoad`, `classicLoad` oraz ruchami. `Max grade` dotyczy ukończonych wspinaczek, z rozdzieleniem skal balda i drogi/obwodu; przy samych próbach brak ukończonej wyceny. Nie zwracamy jednej porównanej wyceny z nieporównywalnych skal.
+
+Scenariusz Bronx rozszerza plan pierwszego użytecznego Dashboardu o średnią intensywność ocenianych ruchów oraz opcjonalne rekordy oparte na faktach. Kandydaci to największa liczba ruchów, największa praca na trudnych problemach i najwyższe RP. Obecny `DashboardSessionSummary` nie zawiera jeszcze tych pól; definicje rekordów i ich DTO trzeba ustalić po potwierdzeniu zapisu podstawowych metryk.
 
 Pierwszy read model Dashboardu dostarcza tekstowe metryki z prawdziwych danych i nie musi dostarczać serii do wykresu. Rozkład prób/przejść według wycen wymaga osobnego zatwierdzenia; jeśli zostanie dodany, skale pozostają rozdzielone (DEC-022). Inne sekcje Dashboardu nie poszerzają automatycznie pierwszego zakresu API.
 

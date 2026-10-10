@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    container_name: climbbetter-postgres
+    environment:
+      POSTGRES_DB: climbbetter
+      POSTGRES_USER: climbbetter
+      POSTGRES_PASSWORD: climbbetter-local
+    ports:
+      - "5433:5432"
+    volumes:
+      - climbbetter-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U climbbetter -d climbbetter
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  climbbetter-postgres-data:

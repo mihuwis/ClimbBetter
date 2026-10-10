@@ -1,6 +1,6 @@
 # Backend Java
 
-Status: bootstrap częściowo wykonany; aktualizacja 2026-10-04. Pełny zestaw testów backendu przeszedł po uruchomieniu Docker Desktop; aplikacji nie uruchamiano osobno.
+Status: odczyt Dashboardu i fundament obliczeń działają z PostgreSQL; zapis sesji jest rozpoczęty, ale jeszcze nie ma endpointu; aktualizacja 2026-10-10.
 
 ## Stan potwierdzony w repozytorium
 
@@ -15,17 +15,25 @@ Status: bootstrap częściowo wykonany; aktualizacja 2026-10-04. Pełny zestaw t
 | Testy ------------- | context load, strefa UTC, `ApplicationModules.verify()` i konfiguracja Testcontainers PostgreSQL ----------------------------------------- |
 | Zależności -------- | MVC, validation, JPA, Flyway/PostgreSQL, Actuator, Modulith oraz testowe startery -------------------------------------------------------- |
 
-Wersje powyżej opisują pliki repozytorium, nie ocenę aktualności bibliotek. Istnienie zależności Actuator nie oznacza sprawdzenia odpowiedzi health. Testcontainers używa obecnie `postgres:latest`; wersja docelowa jest otwarta (`OPEN-13`).
+Wersje powyżej opisują pliki repozytorium, nie ocenę aktualności bibliotek. Istnienie zależności Actuator nie oznacza sprawdzenia odpowiedzi health. Local i Testcontainers używają przypiętego obrazu `postgres:17.6-alpine` zgodnie z DEC-023.
 
-PostgreSQL testowy nie jest opisany przez `Dockerfile` ani Compose. Tworzy go programowo `TestcontainersConfiguration`, a `@ServiceConnection` podłącza go do kontekstu Spring Boot. Wymaga to uruchomionego Docker Desktop przed testem. Jest to tymczasowa baza testowa bez skonfigurowanego trwałego wolumenu; osobne, powtarzalne środowisko `local` nadal wymaga decyzji OPEN-13.
+PostgreSQL testowy tworzy programowo `TestcontainersConfiguration`, a `@ServiceConnection` podłącza go do Spring Boot. Wymaga to uruchomionego Docker Desktop i pozostaje bazą tymczasową. Osobne środowisko local działa z [Compose](../../infra/compose.yml), portem hosta `5433` oraz nazwanym wolumenem zachowującym dane między restartami.
 
-Pierwszy potwierdzony element domeny `training` to `FamiliarityBand.fromPriorContactCount`. Mapuje granice `0`, `1–10`, `11–20` i `21+`, a ujemną liczbę odrzuca. Celowany `FamiliarityBandTest` zakończył się wynikiem 7 testów, 0 failures i 0 errors. To dowód działania tej jednej reguły, nie całego modułu treningowego.
+Moduł `training` zawiera obecnie klasyfikację wpisu, rozdzielone tryby przejścia i asekuracji, `MoveCount`, osobny `WarmUpEntry`, kalkulatory EDL, intensywności i obu loadów oraz agregację `EntryContribution` do `SessionMetrics`. Potwierdzone reguły obejmują `executedMoves > totalMoves`, rozgrzewkę wnoszącą ruchy i zerowy load oraz sumowanie wpisów ocenianych z rozgrzewką.
 
-Pełne `./mvnw test` z 2026-10-04 wykonało 10 testów: 7 dla `FamiliarityBand`, 2 dla kontekstu Spring i zegara UTC oraz 1 dla granic modułów. Wszystkie zakończyły się bez failures, errors i skipped. Test kontekstu uruchomił PostgreSQL przez Testcontainers; wynik potwierdza bootstrap testowy, nie migracje ani zapis domenowy, których jeszcze nie ma.
+Wcześniejszy pełny `./mvnw test` z 2026-10-10 wykonał 13 testów dla pierwszego pionu Dashboardu. Po dodaniu kolejnych testów domenowych użytkownik ponownie potwierdził sukces pełnego zestawu, ale bez przekazania końcowej liczby. Po migracji `V5` celowany `DashboardQueryIntegrationTest` uruchomił PostgreSQL 17.6 przez Testcontainers i przeszedł po dostosowaniu oczekiwanej skali loadów do czterech miejsc.
+
+## Potwierdzony pion Dashboardu
+
+`GET /api/v1/dashboard/sessions` przechodzi przez `DashboardController`, `DashboardQueryService`, `CurrentUserProvider` i `DashboardSessionRepository`. Repozytorium używa `JdbcClient`, filtruje po bieżącym użytkowniku, sortuje sesje malejąco i zwraca maksymalnie 20 rekordów jako `DashboardSessionSummary`.
+
+Migracje `V1`–`V5` tworzą schematy modułów oraz tabele `identity.users`, `catalog.areas`, `training.training_sessions` i `training.training_entries`. `V5` rozdziela wariant oceniany od rozgrzewki, zachowuje kolejność wpisów i snapshot podstawowych wyników oraz ustawia cztery miejsca dziesiętne dla loadów. Testowa migracja powtarzalna dodaje deterministycznego użytkownika wyłącznie w profilu testowym. Test integracyjny wstawia Area i sesję do prawdziwego PostgreSQL, a następnie odczytuje read model przez `DashboardQuery`.
+
+Uruchomienie z profilem `local` połączyło aplikację z trwałym PostgreSQL, zastosowało cztery migracje i uruchomiło Tomcat na porcie 8080. Ręczne `GET /api/v1/dashboard/sessions` zwróciło `[]` z pustej lokalnej tabeli. DBeaver potwierdził obecność schematów `identity`, `catalog`, `training` i `reporting`.
 
 ## Czego jeszcze nie ma w Javie
 
-Nie znaleziono biznesowych kontrolerów i endpointów, DTO sesji, agregatów treningowych, encji JPA, kalkulatora, migracji SQL, seedów ani OpenAPI/springdoc. `infra` nie zawiera Compose. Nie potwierdzono połączenia z istniejącą lokalną bazą użytkownika.
+Nadal nie ma kontrolera, serwisu ani repozytorium zapisującego sesję, resolverów wyceny/profilu/stylu/poziomu, Details ani OpenAPI/springdoc. Powstał zewnętrzny `CreateTrainingSessionCommand`, ale w źródłach brakuje jeszcze wskazanego przez niego `TrainingEntryCommand`; jest to pierwszy konkretny krok następnej sesji. Dashboard ma działający odczyt, lecz lokalna baza nie zawiera jeszcze sesji utworzonej przez API, a frontend nadal korzysta z mocków.
 
 Stary `CB_Backend.md` jednocześnie nazywał katalog pustym i odhaczał bootstrap. Bieżący opis opiera się na kodzie; dawne checklisty pozostają w archiwum.
 
@@ -41,7 +49,7 @@ Zapis ma uwzględnić powtórzony request, rollback całego treningu przy błęd
 - Command handler wyznacza granicę transakcji; query zwraca projekcję dla odbiorcy.
 - Nie serializujemy encji JPA jako odpowiedzi HTTP.
 - Flyway ma tworzyć schemat; Hibernate wyłącznie go waliduje.
-- `CurrentUserProvider` jest planowanym portem. Dev-user może działać tylko w local/test; `userId` nie pochodzi ze zwykłego body requestu.
+- `CurrentUserProvider` jest wdrożonym portem; stała implementacja działa tylko w local/test, a `userId` nie pochodzi ze zwykłego body requestu.
 - Reguły dziesiętne, wynik i snapshot odpowiadają [specyfikacji wyceny](../business/grading-and-scoring.md).
 
 ## Dowód ukończenia pierwszego przyrostu

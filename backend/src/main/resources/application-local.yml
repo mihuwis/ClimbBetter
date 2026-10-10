@@ -3,3 +3,8 @@ spring:
     url: ${CB_DB_URL}
     username: ${CB_DB_USERNAME}
     password: ${CB_DB_PASSWORD}
+
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/local-migration

@@ -13,6 +13,7 @@ Kod i identyfikatory są po angielsku. Dokumentację objaśniamy po polsku, zach
 | `climbType`, `effortProfileId`                                      | dyscyplina i profil wysiłku to oddzielne pojęcia ------------------------- |
 | `baseEdl`, `edlCount`, `totalMoves`, `executedMoves`                | cztery różne wartości, EDL nie jest długością drogi ---------------------- |
 | `resultType`, `ascentMode`, `familiarityBand`                       | rezultat, deklarowany tryb i znajomość wyprowadzana z historii ----------- |
+| `protectionMode`                                                    | sposób asekuracji `LEAD` albo `TOP_ROPE`; oddzielny od OS/Flash/RP ------- |
 | `moveIntensity`, `classicLoad`, `adjustedLoad`                      | jawne metryki zamiast niejednoznacznych `score`, `points`, `LengthDivisor` |
 | `sessionDate`, `timeZoneId`                                         | lokalna data treningowa i strefa IANA ------------------------------------ |
 | `clientSessionId`, `clientEntryId`, `clientClimbId`, `clientAreaId` | stabilne identyfikatory klienta, niezależne od nazw ---------------------- |

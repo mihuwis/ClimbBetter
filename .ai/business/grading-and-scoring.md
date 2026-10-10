@@ -4,7 +4,7 @@ Status: przeniesiona specyfikacja v1 z 2026-08-15; konsolidacja 2026-10-03, iter
 
 Poniżej zachowano pełne tabele, wzory, przykłady i propozycje statystyk z `CB_climbing_effort_valuation.md`. Źródłowy arkusz nie był ponownie odczytywany w tej iteracji. Przykłady w dokumentacji nie zastępują zatwierdzenia 5–10 realnych sesji ani testów kalkulatora.
 
-Wykryte luki kontraktu są w [rejestrze decyzji](../documentation/decisions.md): `OPEN-07` (brak poziomu i preview), `OPEN-09` (rozgrzewka), `OPEN-10` (niepełne kombinacje reguł stylu), `OPEN-11` (granice estymacji i bandów). Uzgodnionych wzorów nie zmieniono. Historyczne określenie „iteracja 4 z 4” dotyczy dawnej specyfikacji, nie obecnego porządkowania `.ai`.
+Wykryte luki kontraktu są w [rejestrze decyzji](../documentation/decisions.md): `OPEN-07` (brak poziomu i preview), `OPEN-10` (niepełne kombinacje reguł stylu), `OPEN-11` (granice estymacji i bandów). Rozgrzewkę rozstrzyga DEC-026. Uzgodnionych wzorów nie zmieniono. Historyczne określenie „iteracja 4 z 4” dotyczy dawnej specyfikacji, nie obecnego porządkowania `.ai`.
 
 ## 1. Cel dokumentu
 
@@ -44,15 +44,18 @@ Definiuje również, które wartości sumujemy, które uśredniamy i jakie dane 
 
 ### 4.1. Dane faktyczne od użytkownika
 
+Dla ocenianej próby albo przejścia:
+
 - rodzaj wspinaczki;
 - profil EDL;
 - wycena;
-- rezultat `ASCENT`, `ATTEMPT` albo `WARMUP`;
+- rezultat `ASCENT` albo `ATTEMPT`;
 - deklarowany tryb `OS`, `FLASH` albo `RP`;
 - całkowita liczba ruchów problemu (`totalMoves`);
 - liczba faktycznie wykonanych ruchów (`executedMoves`);
-- jednoznaczny rezultat (`ASCENT`, `ATTEMPT` albo `WARMUP`);
 - opcjonalnie droga katalogowa, nazwa robocza i notatka.
+
+Dla rozgrzewki wymagane jest tylko dodatnie `executedMoves`. Wspinaczka, profil EDL, wycena, `totalMoves`, `ascentMode`, `protectionMode`, poziom użytkownika i mnożniki nie należą do tego wariantu wpisu.
 
 ### 4.2. Dane pobierane z modelu
 
@@ -150,13 +153,14 @@ Wpis przechowuje osobno `resultType`, deklarowany `ascentMode` i automatyczny `f
 | RP słaba znajomość ---- |              1.30 | `ASCENT`     | `RP` + `LOW` --------------------- |
 | RP normalny ----------- |              1.00 | `ASCENT`     | `RP` + `NORMAL` ------------------ |
 | RP stały -------------- |              0.75 | `ASCENT`     | `RP` + `ESTABLISHED` ------------- |
-| Rozgrzewka ------------ |              0.00 | `WARMUP`     | bez trybu i znajomości ----------- |
 | Attempt OS/Flash ------ |              1.50 | `ATTEMPT`    | `OS` lub `FLASH` + `FIRST_CONTACT` |
 | Attempt słaba znajomość |              1.20 | `ATTEMPT`    | `RP` + `LOW` --------------------- |
 | Attempt normalny ------ |              0.90 | `ATTEMPT`    | `RP` + `NORMAL` ------------------ |
 | Attempt stały --------- |              0.50 | `ATTEMPT`    | `RP` + `ESTABLISHED` ------------- |
 
 Nieudana próba generuje obciążenie, jeżeli wykonano w niej ruchy. Nie jest jednak ukończonym przejściem ani osiągnięciem.
+
+Rozgrzewka nie korzysta z `StyleRule` ani mnożnika stylu. Jest osobnym wariantem wpisu z zerowym `classicLoad` i `adjustedLoad`.
 
 Znajomość jest liczona ze wszystkich wcześniejszych prób i przejść tej samej wspinaczki z ostatnich dwóch lat, bez rozgrzewek. Wcześniejszy wpis tej samej sesji już zwiększa licznik:
 
@@ -234,7 +238,7 @@ Kolejność jest częścią specyfikacji.
 
 - `totalMoves > 0` dla wpisu ocenianego;
 - `executedMoves >= 0`;
-- `executedMoves <= totalMoves`;
+- `executedMoves` może przekraczać `totalMoves`, gdy wpis obejmuje odpadnięcia i ponowne wykonanie części ruchów;
 - zgodność stylu z rezultatem przejścia/próby;
 - aktywne i właściwe pozycje słowników.
 
@@ -252,7 +256,7 @@ baseEdl     = EffortProfile.baseEdl
 edlCount = baseEdl + 0.2 × totalMoves
 ```
 
-Dla rozgrzewki `edlCount = 0`.
+Dla rozgrzewki `edlCount` nie występuje; ten krok jest pomijany.
 
 ### Krok 4 — wyznaczenie intensywności ruchu
 
@@ -260,7 +264,7 @@ Dla rozgrzewki `edlCount = 0`.
 moveIntensity = gradePoints / edlCount
 ```
 
-Dla rozgrzewki `moveIntensity` jest nieobecne logicznie; w kontrakcie może być `null` albo `0` po decyzji o reprezentacji. Nie wykonujemy dzielenia przez zero.
+Dla rozgrzewki `moveIntensity` nie występuje. Nie wykonujemy dzielenia przez zero.
 
 ### Krok 5 — wybór poziomu odniesienia
 
@@ -288,7 +292,7 @@ classicLoad =
 
 Dla rozgrzewki `classicLoad = 0`.
 
-Ułamek ukończenia służy wyłącznie proporcjonalnemu naliczeniu punktów. Nie zastępuje zapisywania liczby wykonanych ruchów.
+Stosunek `executedMoves / totalMoves` nie jest ograniczony do 1.0. `totalMoves` opisuje długość wspinaczki, a `executedMoves` faktycznie wykonaną pracę, łącznie z powtórzonymi ruchami po odpadnięciu. Przykład `12/20` jest poprawny i w obecnym wzorze zwiększa load za dodatkową pracę. Sam stosunek nie rozstrzyga `ASCENT` ani `ATTEMPT`.
 
 ### Krok 8 — skorygowane obciążenie wpisu
 
@@ -407,7 +411,7 @@ Nieudana próba ma load, ale nie zwiększa `completedClimbsCount`.
 Dla `executedMoves = 30`:
 
 ```text
-totalMoves contribution = 30
+executedMoves contribution = 30
 classicLoad             = 0
 adjustedLoad            = 0
 averageMoveIntensity    = wpis pominięty

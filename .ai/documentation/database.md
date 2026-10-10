@@ -1,8 +1,10 @@
 # Model danych i relacje z bazą
 
-Status: **specyfikacja docelowa, bez migracji Javy**; przegląd plików 2026-10-03.
+Status: **częściowo wdrożone migracje Java/Flyway**; aktualizacja 2026-10-10.
 
-W backendzie są zależności JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. W `backend/src/main/resources` nie ma migracji, a w kodzie Javy nie ma jeszcze encji biznesowych. Poniższy schemat nie jest raportem istniejącej bazy. Archiwalny backend .NET nie dowodzi wdrożenia tych tabel w Javie.
+Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V5` tworzą schematy `identity`, `catalog`, `training`, `reporting` oraz tabele `users`, `areas`, `training_sessions` i `training_entries`. Nie ma jeszcze encji zapisu JPA ani pozostałych tabel docelowego modelu. Poniższy pełny schemat nadal opisuje kierunek, a nie kompletny stan wdrożenia.
+
+Pusta lokalna baza PostgreSQL 17.6 przyjęła migracje `V1`–`V4` podczas ręcznego uruchomienia. Migracja `V5` wykonała się w Testcontainers; po dostosowaniu oczekiwanej skali `BigDecimal` integracyjny test Dashboardu ponownie przeszedł.
 
 Poniżej zachowano szczegółowe definicje encji, pól, snapshotów, relacji, warstw i ograniczeń z [CB_model](../archive/source-snapshot/docs/CB_model.md), wraz z numeracją sekcji źródłowych. Wzory i wartości liczbowe mają źródło nadrzędne w [grading-and-scoring](../business/grading-and-scoring.md). [ERD](diagrams/data-model.md) przedstawia logiczny model planowany, nie wygenerowany schemat PostgreSQL.
 
@@ -12,7 +14,7 @@ Poniżej zachowano szczegółowe definicje encji, pól, snapshotów, relacji, wa
 - Grupowanie w Details wymaga stabilnego `climbId` i zachowania `entryOrder`, nie nowej encji „grupa po nazwie”.
 - Dla sesji mieszanej najwyższe ukończone wyceny muszą być rozdzielone według skal. Starsze pojedyncze `maxCompletedGrade` nie ustala ostatecznego DTO.
 - Jedno Area na sesję jest zatwierdzoną zasadą biznesową (DEC-018; zamknięte `OPEN-03`). Pozostaje jedno `TrainingSession.areaId`; Climb i opcjonalny Sector każdego wpisu muszą należeć do tego Area.
-- Kolejność między sesjami (`OPEN-12`), reprezentacja czasu (`OPEN-08`) i pola rozgrzewki (`OPEN-09`) nadal wpływają na finalne DDL.
+- Kolejność między sesjami (`OPEN-12`) i reprezentacja czasu (`OPEN-08`) nadal wpływają na finalne DDL. Pola rozgrzewki rozstrzyga DEC-026.
 - Opis i miniatura drogi są potrzebami prezentacji; nie potwierdzono jeszcze ich pól ani zasad historyczności (`OPEN-06`).
 - Unique client ID nie wystarcza do ochrony historii przy równoległych zapisach różnych sesji; to osobny problem kontraktu (`OPEN-12`).
 
@@ -266,6 +268,8 @@ Podsumowanie jest zapisanym cache’em odtwarzalnym z wpisów, a nie niezależny
 
 Jedna próba, jedno przejście albo rozgrzewka. Kolejność wpisów w sesji jest częścią danych.
 
+Rozgrzewka jest osobnym wariantem wpisu i wymaga tylko dodatniego `executedMoves`. Nie wymaga identyfikacji wspinaczki, wyceny, `totalMoves`, profilu EDL, trybu przejścia ani sposobu asekuracji. Pola EDL i intensywności są dla niej nieobecne, a oba loady mają wartość `0` (DEC-026). Finalne DDL musi wyrażać te różne warunki wariantów bez sztucznych zer dla danych, które nie dotyczą rozgrzewki.
+
 | Grupa                    | Pola                                                                                                                                                                      |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tożsamość -------------- | `id`, `sessionId`, opcjonalny `clientEntryId` --------------------------------------------------------------------------------------------------------------------------- |
@@ -371,7 +375,7 @@ Schemat jest propozycją v1. Flyway ma być jedynym źródłem DDL, a Hibernate 
 - unique mapowanie prywatnego `(owner_id, client_climb_id)` dla niepustego client ID;
 - `duration_minutes > 0`;
 - `total_moves > 0` dla wpisu ocenianego;
-- `executed_moves >= 0` i `executed_moves <= total_moves`;
+- `executed_moves >= 0`; może przekraczać `total_moves`, ponieważ obejmuje powtórzone ruchy po odpadnięciu;
 - nieujemne cache’e sesji;
 - brak fizycznego cascade delete z katalogu do historii treningowej;
 - zgodność Area sesji z Area wspinaczek i ich opcjonalnych sektorów; backend ma ją walidować niezależnie od UI, a techniczny sposób dodatkowego zabezpieczenia w DDL pozostaje do zaprojektowania;

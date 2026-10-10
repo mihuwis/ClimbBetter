@@ -1,6 +1,6 @@
 # Uruchomienie i weryfikacja
 
-Status: instrukcje wynikające z plików repozytorium; 2026-10-03. Poleceń build/test nie uruchamiano podczas tej iteracji dokumentacji.
+Status: zweryfikowane uruchomienie testowe i lokalne; aktualizacja 2026-10-10.
 
 Polecenia poniżej wykonuje użytkownik albo asystent w wyraźnie zleconym zakresie. Nie są automatycznym poleceniem ich wykonania przez agenta.
 
@@ -30,21 +30,32 @@ Projekt deklaruje Java 21; wrapper pobiera Maven zgodnie z `backend/.mvn/wrapper
 .\mvnw.cmd verify
 ```
 
-Test kontekstu korzysta z Testcontainers PostgreSQL i wymaga wcześniej uruchomionego Docker Desktop. Na początku nowego dnia, przed pełnym `./mvnw test`, sprawdzamy `docker version`; wynik powinien zawierać sekcje `Client` i `Server`. Pobranie zależności lub obrazu może wymagać sieci. Aktualna konfiguracja testu używa nieprzypiętego `postgres:latest`; do wyboru jest wersja powtarzalna (`OPEN-13`).
+Test kontekstu korzysta z Testcontainers PostgreSQL i wymaga wcześniej uruchomionego Docker Desktop. Na początku nowego dnia, przed pełnym `./mvnw test`, sprawdzamy `docker version`; wynik powinien zawierać sekcje `Client` i `Server`. Local i testy używają obrazu `postgres:17.6-alpine`.
 
-Repozytorium nie potrzebuje obecnie `Dockerfile` ani Compose do tych testów. `TestcontainersConfiguration` w kodzie testowym deklaruje `PostgreSQLContainer` na podstawie publicznego obrazu `postgres:latest`. Podczas uruchomienia testu biblioteka prosi działający Docker o utworzenie tymczasowego kontenera, a `@ServiceConnection` przekazuje parametry połączenia do Spring Boot, Flyway i JPA. Nie skonfigurowano trwałego wolumenu ani stałego portu; baza służy testowi i jej danych nie traktujemy jako lokalnego środowiska developerskiego.
+Testcontainers nadal nie wymaga Compose: tworzy tymczasowy kontener, a `@ServiceConnection` przekazuje połączenie do Spring Boot, Flyway i JPA. Dane testowe znikają wraz z kontenerem. Trwałe środowisko local jest osobnym serwisem z [infra/compose.yml](../../infra/compose.yml) i nazwanym wolumenem.
 
-Pierwsza próba pełnego uruchomienia z 2026-10-04 wykazała brak działającego Dockera. Po uruchomieniu Docker Desktop ponowne `./mvnw test` zakończyło się sukcesem: `FamiliarityBandTest` 7/7, testy kontekstu i zegara 2/2 oraz test granic modułów 1/1. Łącznie wykonano 10 testów bez failures, errors i skipped.
+Pełne `./mvnw test` z 2026-10-10 wykonało 13 testów bez failures, errors i skipped. Obejmuje to test integracyjny PostgreSQL dla `DashboardQuery` oraz dwa testy kontraktu kontrolera.
 
-Profil `local` odczytuje konfigurację bazy z otoczenia. Nazwy to `CB_DB_URL`, `CB_DB_USERNAME` oraz nazwa zmiennej wskazana przy `password` w [application-local.yml](../../backend/src/main/resources/application-local.yml). Nie kopiujemy wartości lokalnych poświadczeń do dokumentacji.
+## Lokalny PostgreSQL
 
-Po przygotowaniu bazy i zmiennych, planowane uruchomienie z tego katalogu:
+Z głównego katalogu repozytorium:
+
+```bash
+docker compose -f infra/compose.yml up -d
+docker compose -f infra/compose.yml ps
+```
+
+Serwis mapuje host `127.0.0.1:5433` na port PostgreSQL `5432` w kontenerze. Port hosta 5433 wybrano, ponieważ 5432 był już używany przez inną lokalną instancję. Nazwany wolumen zachowuje dane po `stop`, `down` i restarcie Docker Desktop; `down -v` usuwa dane i nie jest zwykłym poleceniem zatrzymania.
+
+Profil `local` odczytuje `CB_DB_URL`, `CB_DB_USERNAME` i `CB_DB_PASSWORD`. Dla obecnego Compose URL ma postać `jdbc:postgresql://127.0.0.1:5433/climbbetter`.
+
+Po ustawieniu zmiennych uruchomienie z katalogu `backend`:
 
 ```powershell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-To uruchomienie szkieletu: nie ma jeszcze migracji ani treningowego API. W repozytorium nie ma `infra/compose.yaml`, dlatego nie podajemy fikcyjnej komendy Compose. Najpierw rozstrzygamy użycie istniejącej bazy lub nowej instancji (`OPEN-13`). Health jest oczekiwany z zależności Actuator, lecz odpowiedź endpointu nie była sprawdzana. Swagger UI nie jest jeszcze skonfigurowany.
+Uruchomienie z 2026-10-10 połączyło się z PostgreSQL 17.6, zastosowało migracje `V1`–`V4` i wystartowało na porcie 8080. `curl http://localhost:8080/api/v1/dashboard/sessions` zwrócił `[]`. Swagger UI nadal nie jest skonfigurowany.
 
 ## Flutter
 

@@ -35,9 +35,15 @@ Sesja nie zapisuje `primaryDiscipline`; charakter jest wyprowadzany z typów wpi
 
 ## Wynik, tryb i znajomość
 
-`resultType` ma wartości `ASCENT`, `ATTEMPT`, `WARMUP`; nie wprowadzamy równoległego `isCompleted`. Wykonanie wszystkich ruchów samo nie dowodzi czystego przejścia. OS i Flash są deklaracjami użytkownika, nie wnioskiem z braku wpisów w aplikacji.
+`resultType` ma wartości `ASCENT`, `ATTEMPT`, `WARMUP`; nie wprowadzamy równoległego `isCompleted`. Wykonanie wszystkich ruchów samo nie dowodzi czystego przejścia. Dla ukończonego, nowo nazwanego balda bez historii szybki formularz proponuje OS (DEC-028). To edytowalna sugestia, a nie nieodwracalny dowód: użytkownik może wskazać wcześniejszą znajomość spoza aplikacji.
 
 `ascentMode` i wyprowadzony `familiarityBand` są odrębne. Znajomość opiera się na wcześniejszych kontaktach z ostatnich dwóch lat bez rozgrzewek. Fast RP używa numeru próby w całej znanej historii i nie zmienia mnożnika loadu. Dokładne progi, tabele i wzory: [grading-and-scoring](grading-and-scoring.md).
+
+Sposób asekuracji drogi jest osobnym wymiarem: `protectionMode` ma obecnie `LEAD` albo `TOP_ROPE`. Top rope, pokazywany w polskim UI jako „na wędkę”, może współistnieć z `OS`, `FLASH` albo `RP`; nie jest wartością `ascentMode`. `ProtectionMode` dotyczy `ROUTE`, a dla `BOULDER` i `CIRCUIT` pozostaje nieobecny.
+
+`totalMoves` opisuje długość wspinaczki, natomiast `executedMoves` opisuje wszystkie rzeczywiście wykonane ruchy w danym wpisie. Po odpadnięciu i ponownym wykonaniu fragmentu `executedMoves` może być większe od `totalMoves`, np. `12/20`. Rezultat nadal jest jawnym `resultType`, a nie wnioskiem z porównania tych liczb.
+
+Rozgrzewka jest osobnym wariantem wpisu. Wymaga wyłącznie dodatniego `executedMoves`; nie wymaga wspinaczki, wyceny, `totalMoves`, profilu EDL, `ascentMode` ani `protectionMode`. Nie ma `edlCount` ani `moveIntensity`, wnosi jednak wykonane ruchy do sumy sesji. Jej `classicLoad` i `adjustedLoad` wynoszą `0` (DEC-026).
 
 Konflikt OS/Flash z historią wymaga jawnego potwierdzenia i audytu. Zatwierdzona możliwość override nie rozstrzyga wszystkich szczegółów doboru mnożnika; luka jest zapisana jako `OPEN-10`.
 
