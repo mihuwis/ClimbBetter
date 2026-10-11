@@ -2,9 +2,9 @@
 
 Status: **częściowo wdrożone migracje Java/Flyway**; aktualizacja 2026-10-11.
 
-Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V11` tworzą schematy modułów, tabele pierwszego pionu zapisu, słowniki wycen, profile i reguły obliczeń. Zapis korzysta bezpośrednio z `JdbcClient`, bez encji JPA. Poniższy pełny model nadal obejmuje także elementy późniejszych etapów.
+Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V12` tworzą schematy modułów, tabele pierwszego pionu zapisu, słowniki wycen, profile, reguły obliczeń i fingerprint żądania sesji. Zapis korzysta bezpośrednio z `JdbcClient`, bez encji JPA. Poniższy pełny model nadal obejmuje także elementy późniejszych etapów.
 
-PostgreSQL 17.6 w Testcontainers przyjął migracje `V1`–`V11`. Potwierdzony test pionowy utworzył prywatne Area i wspinaczki, zapisał sesję z trzema wpisami oraz odczytał jej summary przez Dashboard. Lokalna baza korzysta z tego samego przypiętego obrazu i migracji Flyway.
+PostgreSQL 17.6 w Testcontainers przyjął migracje `V1`–`V12`. Potwierdzony test pionowy utworzył prywatne Area i wspinaczki, zapisał sesję z trzema wpisami oraz odczytał jej summary przez Dashboard. Testy potwierdziły też rollback całego agregatu, brak duplikatu po identycznym retry oraz zachowanie pierwotnego rekordu po konflikcie fingerprintu. Lokalna baza korzysta z tego samego przypiętego obrazu i migracji Flyway.
 
 Poniżej zachowano szczegółowe definicje encji, pól, snapshotów, relacji, warstw i ograniczeń z [CB_model](../archive/source-snapshot/docs/CB_model.md), wraz z numeracją sekcji źródłowych. Wzory i wartości liczbowe mają źródło nadrzędne w [grading-and-scoring](../business/grading-and-scoring.md). [ERD](diagrams/data-model.md) przedstawia logiczny model planowany, nie wygenerowany schemat PostgreSQL.
 
@@ -265,7 +265,7 @@ Aggregate root jednego treningu w jednym Area — rejonie wspinaczkowym albo na 
 | Historia techniczna | `createdAt`, `updatedAt`, `version`                                                                                                        |
 | Podsumowanie ------ | `totalMoves`, `classicLoad`, `adjustedLoad`, `averageMoveIntensity`, `entryCount`, `completedClimbsCount`, opcjonalnie `maxCompletedGrade` |
 
-`clientSessionId` jest kluczem idempotencji i przyszłej synchronizacji offline. `areaId` wskazuje pełne Area albo automatycznie utworzony prywatny draft. Snapshot nazwy miejsca chroni historię przed późniejszym uzupełnieniem lub scaleniem katalogu.
+`clientSessionId` jest kluczem idempotencji i przyszłej synchronizacji offline. `requestFingerprint` przechowuje SHA-256 znormalizowanej komendy i odróżnia bezpieczne powtórzenie od próby użycia tego samego klucza dla innych danych. Kolumna jest nullable wyłącznie dla zgodności ze starszymi rekordami; nowy zapis API zawsze przekazuje fingerprint. `areaId` wskazuje pełne Area albo automatycznie utworzony prywatny draft. Snapshot nazwy miejsca chroni historię przed późniejszym uzupełnieniem lub scaleniem katalogu.
 
 `sessionName` jest opcjonalne. Gdy użytkownik go nie poda, powstaje stabilna nazwa w stylu `Wieczorna sesja boulderowa na Bronx`, a `sessionNameSource = GENERATED`. Nazwę można później edytować; wtedy źródło zmienia się na `USER`.
 

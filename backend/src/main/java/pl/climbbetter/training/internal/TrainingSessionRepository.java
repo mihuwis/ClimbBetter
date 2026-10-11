@@ -3,6 +3,10 @@ package pl.climbbetter.training.internal;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import pl.climbbetter.training.TrainingEntryCommand;
+import pl.climbbetter.training.TrainingSessionDetails;
+import pl.climbbetter.training.TrainingSessionDetails.CalculationDetails;
+import pl.climbbetter.training.TrainingSessionDetails.EntryDetails;
+import pl.climbbetter.training.TrainingSessionDetails.HistoryDetails;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedEntry;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedSession;
 
@@ -11,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +29,7 @@ class TrainingSessionRepository {
         this.jdbcClient = jdbcClient;
     }
 
-    Optional<UUID> findIdByClientSessionId(
+    Optional<ExistingSession> findByClientSessionId(
             UUID userId,
             UUID clientSessionId
     ) {
@@ -35,14 +40,24 @@ class TrainingSessionRepository {
         );
 
         return jdbcClient.sql("""
-                        SELECT id
+                        SELECT id, request_fingerprint
                         FROM training.training_sessions
                         WHERE user_id = :userId
                           AND client_session_id = :clientSessionId
                         """)
                 .param("userId", userId)
                 .param("clientSessionId", clientSessionId)
-                .query(UUID.class)
+                .query((resultSet, rowNumber) ->
+                        new ExistingSession(
+                                resultSet.getObject(
+                                        "id",
+                                        UUID.class
+                                ),
+                                resultSet.getString(
+                                        "request_fingerprint"
+                                )
+                        )
+                )
                 .optional();
     }
 
@@ -53,6 +68,7 @@ class TrainingSessionRepository {
                         INSERT INTO training.training_sessions (
                             id,
                             client_session_id,
+                            request_fingerprint,
                             user_id,
                             area_id,
                             session_name,
@@ -75,6 +91,7 @@ class TrainingSessionRepository {
                         VALUES (
                             :id,
                             :clientSessionId,
+                            :requestFingerprint,
                             :userId,
                             :areaId,
                             :sessionName,
@@ -99,6 +116,10 @@ class TrainingSessionRepository {
                 .param(
                         "clientSessionId",
                         session.clientSessionId()
+                )
+                .param(
+                        "requestFingerprint",
+                        session.requestFingerprint()
                 )
                 .param("userId", session.userId())
                 .param("areaId", session.areaId())
@@ -475,13 +496,291 @@ class TrainingSessionRepository {
         }
     }
 
+    Optional<SessionDetailsRow> findDetailsSession(
+            UUID userId,
+            UUID sessionId
+    ) {
+        return jdbcClient.sql("""
+                        SELECT
+                            id,
+                            session_name,
+                            session_date,
+                            time_zone_id,
+                            started_at,
+                            ended_at,
+                            duration_minutes,
+                            area_id,
+                            location_name_snapshot,
+                            total_moves,
+                            classic_load,
+                            adjusted_load,
+                            average_move_intensity,
+                            max_boulder_grade,
+                            max_route_grade
+                        FROM training.training_sessions
+                        WHERE id = :sessionId
+                          AND user_id = :userId
+                        """)
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .query((resultSet, rowNumber) ->
+                        new SessionDetailsRow(
+                                resultSet.getObject(
+                                        "id",
+                                        UUID.class
+                                ),
+                                resultSet.getString("session_name"),
+                                resultSet.getObject(
+                                        "session_date",
+                                        LocalDate.class
+                                ),
+                                resultSet.getString("time_zone_id"),
+                                toInstant(resultSet.getObject(
+                                        "started_at",
+                                        OffsetDateTime.class
+                                )),
+                                toInstant(resultSet.getObject(
+                                        "ended_at",
+                                        OffsetDateTime.class
+                                )),
+                                resultSet.getInt("duration_minutes"),
+                                resultSet.getObject(
+                                        "area_id",
+                                        UUID.class
+                                ),
+                                resultSet.getString(
+                                        "location_name_snapshot"
+                                ),
+                                resultSet.getInt("total_moves"),
+                                resultSet.getBigDecimal("classic_load"),
+                                resultSet.getBigDecimal("adjusted_load"),
+                                resultSet.getBigDecimal(
+                                        "average_move_intensity"
+                                ),
+                                resultSet.getString(
+                                        "max_boulder_grade"
+                                ),
+                                resultSet.getString("max_route_grade")
+                        )
+                )
+                .optional();
+    }
+
+    List<EntryDetails> findDetailsEntries(
+            UUID userId,
+            UUID sessionId
+    ) {
+        return jdbcClient.sql("""
+                        SELECT
+                            entry.id,
+                            entry.client_entry_id,
+                            entry.entry_order,
+                            entry.result_type,
+                            entry.climb_id,
+                            entry.climb_name_snapshot,
+                            entry.climb_type,
+                            entry.grade_scale_code,
+                            entry.grade_label,
+                            entry.effort_profile_code,
+                            entry.effort_profile_name_snapshot,
+                            entry.ascent_mode,
+                            entry.protection_mode,
+                            entry.total_moves,
+                            entry.executed_moves,
+                            entry.notes,
+                            entry.edl_count,
+                            entry.move_intensity,
+                            entry.style_multiplier,
+                            entry.relative_effort_multiplier,
+                            entry.classic_load,
+                            entry.adjusted_load,
+                            entry.current_level_grade_label,
+                            entry.current_level_index,
+                            entry.relative_grade_diff,
+                            entry.outside_calibrated_range,
+                            entry.calculation_model_version,
+                            entry.contact_count_before_two_years,
+                            entry.attempt_ordinal_all_time,
+                            entry.familiarity_band,
+                            entry.familiarity_source,
+                            entry.fast_rp,
+                            entry.history_conflict_detected,
+                            entry.history_conflict_confirmed
+                        FROM training.training_entries entry
+                        JOIN training.training_sessions session
+                          ON session.id = entry.session_id
+                        WHERE session.id = :sessionId
+                          AND session.user_id = :userId
+                        ORDER BY entry.entry_order
+                        """)
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .query((resultSet, rowNumber) -> {
+                    String resultType = resultSet.getString(
+                            "result_type"
+                    );
+
+                    HistoryDetails history = "WARMUP".equals(resultType)
+                            ? null
+                            : new HistoryDetails(
+                                    nullableInteger(
+                                            resultSet,
+                                            "contact_count_before_two_years"
+                                    ),
+                                    nullableInteger(
+                                            resultSet,
+                                            "attempt_ordinal_all_time"
+                                    ),
+                                    resultSet.getString("familiarity_band"),
+                                    resultSet.getString(
+                                            "familiarity_source"
+                                    ),
+                                    nullableBoolean(resultSet, "fast_rp"),
+                                    nullableBoolean(
+                                            resultSet,
+                                            "history_conflict_detected"
+                                    ),
+                                    nullableBoolean(
+                                            resultSet,
+                                            "history_conflict_confirmed"
+                                    )
+                            );
+
+                    CalculationDetails calculation =
+                            new CalculationDetails(
+                                    resultSet.getBigDecimal("edl_count"),
+                                    resultSet.getBigDecimal(
+                                            "move_intensity"
+                                    ),
+                                    resultSet.getBigDecimal(
+                                            "style_multiplier"
+                                    ),
+                                    resultSet.getBigDecimal(
+                                            "relative_effort_multiplier"
+                                    ),
+                                    resultSet.getBigDecimal("classic_load"),
+                                    resultSet.getBigDecimal("adjusted_load"),
+                                    resultSet.getString(
+                                            "current_level_grade_label"
+                                    ),
+                                    nullableInteger(
+                                            resultSet,
+                                            "current_level_index"
+                                    ),
+                                    nullableInteger(
+                                            resultSet,
+                                            "relative_grade_diff"
+                                    ),
+                                    nullableBoolean(
+                                            resultSet,
+                                            "outside_calibrated_range"
+                                    ),
+                                    resultSet.getString(
+                                            "calculation_model_version"
+                                    )
+                            );
+
+                    return new EntryDetails(
+                            resultSet.getObject("id", UUID.class),
+                            resultSet.getObject(
+                                    "client_entry_id",
+                                    UUID.class
+                            ),
+                            resultSet.getInt("entry_order"),
+                            resultType,
+                            resultSet.getObject("climb_id", UUID.class),
+                            resultSet.getString("climb_name_snapshot"),
+                            resultSet.getString("climb_type"),
+                            resultSet.getString("grade_scale_code"),
+                            resultSet.getString("grade_label"),
+                            resultSet.getString("effort_profile_code"),
+                            resultSet.getString(
+                                    "effort_profile_name_snapshot"
+                            ),
+                            resultSet.getString("ascent_mode"),
+                            resultSet.getString("protection_mode"),
+                            nullableInteger(resultSet, "total_moves"),
+                            resultSet.getInt("executed_moves"),
+                            resultSet.getString("notes"),
+                            calculation,
+                            history
+                    );
+                })
+                .list();
+    }
+
     private OffsetDateTime databaseTimestamp(Instant instant) {
         return instant.atOffset(ZoneOffset.UTC);
+    }
+
+    private Instant toInstant(OffsetDateTime value) {
+        return value == null ? null : value.toInstant();
+    }
+
+    private Integer nullableInteger(
+            java.sql.ResultSet resultSet,
+            String columnName
+    ) throws java.sql.SQLException {
+        return resultSet.getObject(columnName, Integer.class);
+    }
+
+    private Boolean nullableBoolean(
+            java.sql.ResultSet resultSet,
+            String columnName
+    ) throws java.sql.SQLException {
+        return resultSet.getObject(columnName, Boolean.class);
+    }
+
+    record SessionDetailsRow(
+            UUID sessionId,
+            String sessionName,
+            LocalDate sessionDate,
+            String timeZoneId,
+            Instant startedAt,
+            Instant endedAt,
+            int durationMinutes,
+            UUID areaId,
+            String areaName,
+            int totalMoves,
+            BigDecimal classicLoad,
+            BigDecimal adjustedLoad,
+            BigDecimal averageMoveIntensity,
+            String maxBoulderGrade,
+            String maxRouteGrade
+    ) {
+
+        TrainingSessionDetails toDetails(List<EntryDetails> entries) {
+            return new TrainingSessionDetails(
+                    sessionId,
+                    sessionName,
+                    sessionDate,
+                    timeZoneId,
+                    startedAt,
+                    endedAt,
+                    durationMinutes,
+                    areaId,
+                    areaName,
+                    totalMoves,
+                    classicLoad,
+                    adjustedLoad,
+                    averageMoveIntensity,
+                    maxBoulderGrade,
+                    maxRouteGrade,
+                    entries
+            );
+        }
+    }
+
+    record ExistingSession(
+            UUID id,
+            String requestFingerprint
+    ) {
     }
 
     record SessionRow(
             UUID id,
             UUID clientSessionId,
+            String requestFingerprint,
             UUID userId,
             UUID areaId,
             String sessionName,

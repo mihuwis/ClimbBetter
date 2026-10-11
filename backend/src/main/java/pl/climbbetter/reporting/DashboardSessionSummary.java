@@ -14,6 +14,7 @@ public record DashboardSessionSummary(
         int totalMoves,
         BigDecimal classicLoad,
         BigDecimal adjustedLoad,
+        BigDecimal averageMoveIntensity,
         String maxBoulderGrade,
         String maxRouteGrade
 ) {

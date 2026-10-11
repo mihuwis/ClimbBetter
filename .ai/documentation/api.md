@@ -56,13 +56,15 @@ Plan błędów: `ProblemDetail`, walidacja per pole/wpis, rozróżnienie braku d
 
 ## Odczyt dla Dashboardu
 
-Wdrożony endpoint `GET /api/v1/dashboard/sessions` zwraca maksymalnie 20 sesji bieżącego użytkownika, sortowanych po `sessionDate` i `createdAt` malejąco. Nie przyjmuje `userId`; serwis pobiera go przez `CurrentUserProvider`. Read model zawiera `sessionId`, `sessionName`, `sessionDate`, `areaName`, `durationMinutes`, `totalMoves`, `classicLoad`, `adjustedLoad`, `maxBoulderGrade` i `maxRouteGrade`.
+Wdrożony endpoint `GET /api/v1/dashboard/sessions` zwraca maksymalnie 20 sesji bieżącego użytkownika, sortowanych po `sessionDate` i `createdAt` malejąco. Nie przyjmuje `userId`; serwis pobiera go przez `CurrentUserProvider`. Read model zawiera `sessionId`, `sessionName`, `sessionDate`, `areaName`, `durationMinutes`, `totalMoves`, `classicLoad`, `adjustedLoad`, `averageMoveIntensity`, `maxBoulderGrade` i `maxRouteGrade`.
 
 Kontroler i serializacja mają test MVC, a zapytanie ma test integracyjny z PostgreSQL. Pusta lokalna baza zwraca `[]`. Nie wdrożono jeszcze paginacji sterowanej przez klienta, odpowiedzi błędów ani danych dla pozostałych sekcji Dashboardu.
 
 Potrzebne są stabilne ID sesji, nazwa, lokalna data, miejsce, czas i podsumowanie z `adjustedLoad`, `classicLoad` oraz ruchami. `Max grade` dotyczy ukończonych wspinaczek, z rozdzieleniem skal balda i drogi/obwodu; przy samych próbach brak ukończonej wyceny. Nie zwracamy jednej porównanej wyceny z nieporównywalnych skal.
 
-Scenariusz Bronx rozszerza plan pierwszego użytecznego Dashboardu o średnią intensywność ocenianych ruchów oraz opcjonalne rekordy oparte na faktach. Kandydaci to największa liczba ruchów, największa praca na trudnych problemach i najwyższe RP. Obecny `DashboardSessionSummary` nie zawiera jeszcze tych pól; definicje rekordów i ich DTO trzeba ustalić po potwierdzeniu zapisu podstawowych metryk.
+Scenariusz Bronx potwierdził średnią intensywność ocenianych ruchów. Rekordy obejmują maksimum sesji, rekord życiowy, najlepszy wynik z jawnego ostatniego okresu, najwyższe RP, najwyższe OS i Flash oraz różnicę indeksów `RP - OS`, zawsze osobno dla skal. Rekord stopnia zwraca co najmniej etykietę wyceny, datę osiągnięcia i `sessionId`. Długość ostatniego okresu trzeba ustalić przed wystawieniem tego wariantu. Największa liczba ruchów na jednej wspinaczce nie jest rekordem. Dla analizy pracy projektowej ruchy wymagają kontekstu wyceny, profilu, intensywności i loadu; nie dodajemy samodzielnego `maxMovesOnSingleClimb` do DTO.
+
+W kodzie i URL używamy terminu `personal best`, ponieważ techniczne `record` jest wieloznaczne. Endpoint wyników życiowych to `GET /api/v1/dashboard/personal-bests`; odpowiedź rozdziela `boulder` i `route`, a w każdej skali zawiera `overall`, `os`, `flash`, `rp` i `rpVsOsGap`. Brak osiągnięcia w danej kategorii ma wartość `null`.
 
 Pierwszy read model Dashboardu dostarcza tekstowe metryki z prawdziwych danych i nie musi dostarczać serii do wykresu. Rozkład prób/przejść według wycen wymaga osobnego zatwierdzenia; jeśli zostanie dodany, skale pozostają rozdzielone (DEC-022). Inne sekcje Dashboardu nie poszerzają automatycznie pierwszego zakresu API.
 

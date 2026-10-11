@@ -45,6 +45,10 @@ public class DashboardQueryIntegrationTest {
                 () -> assertEquals(120, session.totalMoves()),
                 () -> assertEquals(new BigDecimal("850.0000"), session.classicLoad()),
                 () -> assertEquals(new BigDecimal("920.5000"), session.adjustedLoad()),
+                () -> assertEquals(
+                        new BigDecimal("12.5000000000"),
+                        session.averageMoveIntensity()
+                ),
                 () -> assertEquals("7A", session.maxBoulderGrade()),
                 () -> assertEquals("7c", session.maxRouteGrade())
         );

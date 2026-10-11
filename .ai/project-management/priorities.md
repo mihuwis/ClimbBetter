@@ -10,16 +10,13 @@ Data aktualizacji: 2026-10-11. To krótka lista zakresu, nie zestaw poleceń do 
 
 Ustalone: jedna sesja obejmuje jedno Area (DEC-018); `.ai` jest wersjonowane w Git (DEC-019); asystent może czytać i wykonywać uzgodnione testy, lecz nie zmienia kodu bez zatwierdzenia (DEC-020); lokalny odzyskiwalny szkic jest wymagany (DEC-021); pierwszy Dashboard używa tekstowych metryk bez dekoracyjnego wykresu (DEC-022).
 
-Pierwszy pion zapisu i odczytu jest potwierdzony: `POST /api/v1/training/sessions → PostgreSQL → GET /api/v1/dashboard/sessions`. Test zapisuje sesję Bronx z rozgrzewką i dwoma przejściami oraz odczytuje summary. Następny krok to rozszerzyć Dashboard o zapisaną średnią intensywność, a następnie sprawdzić retry, rollback i konflikt historii bez mnożenia osobnych testów dla każdej klasy.
+Pierwszy pion zapisu i odczytu jest potwierdzony: `POST /api/v1/training/sessions → PostgreSQL → GET /api/v1/dashboard/sessions`. Test zapisuje sesję Bronx z rozgrzewką i dwoma przejściami oraz odczytuje summary. Potwierdzono również atomowy rollback, bezpieczne identyczne ponowienie oraz konflikt `409` dla zmienionego żądania z tym samym `clientSessionId`. Następny krok to rozszerzyć Dashboard o zapisaną średnią intensywność, a następnie o uzgodnione rekordy i szczegóły sesji.
 
-Plan następnej sesji:
+Najbliższa kolejność:
 
-1. uruchomić Docker Desktop i sprawdzić `docker version`;
-2. dodać brakujący `TrainingEntryCommand` i wykonać czystą kompilację;
-3. ustalić minimalne resolvery dla wyceny, profilu, historii stylu i poziomu wymagane przez scenariusz Bronx, bez przyjmowania loadu z frontendu;
-4. dodać kontroler, serwis transakcyjny oraz zapis sesji i wpisów przez `JdbcClient`;
-5. potwierdzić jednym testem integracyjnym zapis, podsumowanie i późniejszy odczyt Dashboardu;
-6. dopiero po tym rozszerzyć read model o średnią intensywność i uzgodnione rekordy.
+1. dodać odczyt szczegółów jednej sesji z wpisami w kolejności;
+2. osobno domknąć konflikt historii OS/Flash i ochronę przed równoległymi żądaniami zapisu;
+3. po ustaleniu długości okna rozszerzyć personal bests o najlepsze wyniki ostatniego okresu.
 
 ## TO DO LATER
 

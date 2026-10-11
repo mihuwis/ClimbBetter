@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import pl.climbbetter.reporting.DashboardQuery;
+import pl.climbbetter.reporting.DashboardPersonalBests;
 import pl.climbbetter.reporting.DashboardSessionSummary;
 
 import java.util.List;
@@ -22,6 +23,11 @@ class DashboardController {
     @GetMapping("/sessions")
     List<DashboardSessionSummary> findRecentSessions(){
         return dashboardQuery.findRecentSessions();
+    }
+
+    @GetMapping("/personal-bests")
+    DashboardPersonalBests findPersonalBests() {
+        return dashboardQuery.findPersonalBests();
     }
     
 }

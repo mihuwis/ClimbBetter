@@ -38,6 +38,7 @@ public class TrainingSessionService {
     private final ClimberLevelResolver climberLevelResolver;
     private final CalculationRuleResolver calculationRuleResolver;
     private final TrainingMetricsFacade trainingMetricsFacade;
+    private final TrainingSessionFingerprint fingerprint;
     private final TrainingSessionRepository repository;
 
     TrainingSessionService(
@@ -51,6 +52,7 @@ public class TrainingSessionService {
             ClimberLevelResolver climberLevelResolver,
             CalculationRuleResolver calculationRuleResolver,
             TrainingMetricsFacade trainingMetricsFacade,
+            TrainingSessionFingerprint fingerprint,
             TrainingSessionRepository repository
     ) {
         this.currentUserProvider = currentUserProvider;
@@ -63,6 +65,7 @@ public class TrainingSessionService {
         this.climberLevelResolver = climberLevelResolver;
         this.calculationRuleResolver = calculationRuleResolver;
         this.trainingMetricsFacade = trainingMetricsFacade;
+        this.fingerprint = fingerprint;
         this.repository = repository;
     }
 
@@ -71,16 +74,26 @@ public class TrainingSessionService {
         validateCommand(command);
 
         UUID userId = currentUserProvider.currentUserId();
+        String requestFingerprint = fingerprint.calculate(command);
 
-        UUID existingSessionId = repository
-                .findIdByClientSessionId(
+        TrainingSessionRepository.ExistingSession existingSession =
+                repository.findByClientSessionId(
                         userId,
                         command.clientSessionId()
                 )
                 .orElse(null);
 
-        if (existingSessionId != null) {
-            return existingSessionId;
+        if (existingSession != null) {
+            if (requestFingerprint.equals(
+                    existingSession.requestFingerprint()
+            )) {
+                return existingSession.id();
+            }
+
+            throw new TrainingSessionConflictException(
+                    "Client session ID was already used "
+                            + "for a different request"
+            );
         }
 
         List<TrainingEntryCommand> orderedEntries =
@@ -115,6 +128,7 @@ public class TrainingSessionService {
                 new TrainingSessionRepository.SessionRow(
                         sessionId,
                         command.clientSessionId(),
+                        requestFingerprint,
                         userId,
                         area.id(),
                         resolveSessionName(command, area),

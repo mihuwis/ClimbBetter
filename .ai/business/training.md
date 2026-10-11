@@ -125,7 +125,9 @@ Najbliższy pion zapisu ma obsłużyć bez zbędnych pytań następującą sesj�
 5. Dodaje próby projektów `6C`: wykonuje w nich po 2–4 ruchy, podczas gdy całe problemy mają 6–10 ruchów. Każda próba jest osobnym, uporządkowanym wpisem.
 6. Kończy sesję. Backend oblicza wpisy i podsumowanie, zapisuje całość atomowo, a Dashboard odczytuje zapisaną sesję.
 
-Podstawowe podsumowanie pokazuje sumę wykonanych ruchów, `classicLoad`, `adjustedLoad` i średnią intensywność ocenianych ruchów. Rekordy pojawiają się tylko wtedy, gdy mają podstawę w danych; kandydaci dla tego przepływu to największa liczba ruchów, największa praca na trudnych problemach i najwyższe RP. Dokładne nazwy oraz definicje rekordów trzeba ustalić przed rozszerzeniem DTO Dashboardu; nie wolno mieszać skal ani przedstawiać nieukończonej próby jako rekordu przejścia.
+Podstawowe podsumowanie pokazuje sumę wykonanych ruchów, `classicLoad`, `adjustedLoad` i średnią intensywność ocenianych ruchów. Najwyższa ukończona wycena w sesji opisuje szczyt trudności danego treningu. Porównanie z całą historią daje rekord życiowy, a porównanie z jawnym ostatnim okresem opisuje aktualną formę; długość tego okresu trzeba ustalić w kontrakcie.
+
+Profil wyników obejmuje najwyższe RP, OS i Flash oraz różnicę indeksów `RP - OS`, osobno dla balda i drogi. Rekord przechowuje etykietę wyceny, datę osiągnięcia i `sessionId`, aby można było otworzyć źródłowy trening. Sama największa liczba ruchów na jednej wspinaczce nie jest rekordem, ponieważ premiowałaby jej długość lub powtórzenia. Ruchy, profil wysiłku, intensywność i load opisują różne cechy pracy i należy analizować je razem. Nie wolno mieszać skal ani przedstawiać nieukończonej próby jako rekordu przejścia.
 
 Propozycje angielskich etykiet, niezależne od istniejących kodów profili:
 
