@@ -120,7 +120,7 @@ Najbliższy pion zapisu ma obsłużyć bez zbędnych pytań następującą sesj�
 
 1. Użytkownik wybiera lub tworzy Area `Bronx` i rozpoczyna lokalny szkic sesji.
 2. Dodaje rozgrzewkę z `executedMoves = 20`; wpis nie ma wyceny, EDL ani loadu.
-3. Dodaje trzy ukończone, nazwane baldy o wycenach `5C` lub `5C+`. Nie ma ich wcześniejszej historii, więc formularz proponuje OS i po 8 ruchów; użytkownik może poprawić obie wartości.
+3. Dodaje trzy ukończone, nazwane baldy o wycenach `5` lub `5+` w skali Font. Nie ma ich wcześniejszej historii, więc formularz proponuje OS i po 8 ruchów; użytkownik może poprawić obie wartości.
 4. Dodaje dwa ukończone baldy `6A`, które istnieją już w historii. Backend sugeruje RP na podstawie wcześniejszych kontaktów; jeden z problemów ma rzeczywistą długość 4 ruchów zamiast domyślnych 8.
 5. Dodaje próby projektów `6C`: wykonuje w nich po 2–4 ruchy, podczas gdy całe problemy mają 6–10 ruchów. Każda próba jest osobnym, uporządkowanym wpisem.
 6. Kończy sesję. Backend oblicza wpisy i podsumowanie, zapisuje całość atomowo, a Dashboard odczytuje zapisaną sesję.

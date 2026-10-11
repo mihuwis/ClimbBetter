@@ -36,6 +36,8 @@ To lista wymaganych pojęć, nie zamrożony schemat JSON:
 
 Klient nie dostarcza wiążącego `userId`, poziomu wyliczonego, punktów, mnożników, loadu ani cache'u summary. Backend identyfikuje użytkownika, waliduje dostęp i rozwiązuje obiekty katalogu.
 
+W pierwszym przyroście klient przekazuje `climbType` i kanoniczne `gradeLabel`, a backend wyprowadza `BOULDER_FONT` dla `BOULDER` oraz `ROUTE_FRENCH` dla `ROUTE` i `CIRCUIT`. Rozszerzenie o inne systemy doda `gradeSystemCode`: etykieta V-scale albo skali Kurtyki zostanie zmapowana na kanoniczny `Grade`, zachowując jednocześnie oryginalny system i etykietę w snapshocie. System wejściowy nie dostarcza własnych punktów ani indeksu.
+
 Backend sprawdza zgodność każdego istniejącego Climb i jego opcjonalnego Sector z Area sesji. Nowe prywatne wspinaczki tworzy w tym samym Area. Wpis z innego Area jest błędem walidacji całego atomowego zapisu; sama filtracja selektora w UI nie wystarcza. Różne sektory tego samego Area są dozwolone. Inne Area oznacza osobny request utworzenia sesji z własnym `clientSessionId`, również dla tej samej daty.
 
 ## Obliczenie i transakcja
@@ -50,7 +52,7 @@ Ustalone zachowanie: ponowienie zapisu pod tym samym `clientSessionId` nie tworz
 
 Plan techniczny proponuje unikalność `(userId, clientSessionId)`, fingerprint requestu, ten sam wynik dla identycznego ponowienia i `409` dla różnej treści. Szczegóły normalizacji fingerprintu oraz retry uzupełnionego o potwierdzenie konfliktu trzeba opisać w kontrakcie.
 
-Plan błędów: `ProblemDetail`, walidacja per pole/wpis, rozróżnienie braku dostępu/not found, konfliktu wersji i konfliktu historii OS/Flash. Dla ostatniego wcześniejszy plan wskazuje kod `ASCENT_MODE_HISTORY_CONFLICT`. Samo potwierdzenie nie rozstrzyga macierzy mnożników (`OPEN-10`).
+Plan błędów: `ProblemDetail`, walidacja per pole/wpis, rozróżnienie braku dostępu/not found, konfliktu wersji i konfliktu historii OS/Flash. Backend zwraca `ASCENT_MODE_HISTORY_CONFLICT`, aby frontend wyświetlił ostrzeżenie. Ponowiony zapis danego wpisu z jawnym potwierdzeniem konfliktu zachowuje deklarację OS/Flash, mnożnik `1.50`, rzeczywistą znajomość i audyt override (DEC-031).
 
 ## Odczyt dla Dashboardu
 

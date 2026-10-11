@@ -1,6 +1,6 @@
 # ClimbBetter — mapa współpracy i dokumentacji
 
-Data: 2026-10-03. Status: iteracja porządkowania **2 z 3 w toku**.
+Data: 2026-10-11. Status: iteracja porządkowania **2 z 3 w toku**.
 
 To punkt wejścia do wiedzy o projekcie. Opisujemy osobno ustalenia produktu, stan kodu i zamierzenia. Utworzenie dokumentu lub diagramu nie oznacza wdrożenia funkcji.
 
@@ -24,7 +24,8 @@ README.md                         # opis projektu, uruchomienie, link do dokumen
 │   └── training.md               # ocena treningów i założenia rozwoju
 │
 ├── documentation/
-│   ├── architecture.md           # ogólny obraz systemu i zależności
+│   ├── architecture.md             # ogólny obraz systemu i zależności
+│   ├── engineering-thesis-notes.md # decyzje i dowody do pracy inżynierskiej
 │   ├── backend.md
 │   ├── frontend-web.md
 │   ├── frontend-mobile.md
@@ -55,6 +56,7 @@ Diagramy w pierwszej iteracji: [komponenty](documentation/diagrams/components.md
 | Dokładne tabele, wzory i przykłady ----------------- | [grading-and-scoring](business/grading-and-scoring.md) -------------------------------------------------------------- |
 | Record session i przyszłe planowanie treningów ----- | [training](business/training.md) ------------------------------------------------------------------------------------ |
 | Budowa systemu i zastosowanie wzorców -------------- | [architecture](documentation/architecture.md) ----------------------------------------------------------------------- |
+| Materiał o architekturze do pracy inżynierskiej ---- | [engineering thesis notes](documentation/engineering-thesis-notes.md) ----------------------------------------------- |
 | Java / React / Flutter ----------------------------- | [backend](documentation/backend.md), [web](documentation/frontend-web.md), [mobile](documentation/frontend-mobile.md) |
 | Relacje danych / kontrakt / uruchomienie ----------- | [database](documentation/database.md), [api](documentation/api.md), [development](documentation/development.md) ----- |
 | Co zostało ustalone, co nadal wymaga decyzji ------- | [decisions](documentation/decisions.md) ----------------------------------------------------------------------------- |
@@ -65,7 +67,7 @@ Diagramy w pierwszej iteracji: [komponenty](documentation/diagrams/components.md
 ## Jak czytać statusy i źródła
 
 - **Ustalone**: wynika z wyraźnej decyzji użytkownika lub z zatwierdzonych źródeł. Nie oznacza implementacji.
-- **Potwierdzone w kodzie**: znaleziono odpowiednią implementację lub konfigurację w przeglądzie z 2026-10-03. Uruchomienie i wynik testów podajemy osobno.
+- **Potwierdzone w kodzie**: znaleziono odpowiednią implementację lub konfigurację w przeglądzie repozytorium. Uruchomienie i wynik testów podajemy osobno wraz z datą.
 - **Plan / propozycja**: kierunek do realizacji lub omówienia, nie działająca funkcja.
 - **Otwarte**: wymaga rozstrzygnięcia; identyfikator `OPEN-*` prowadzi do rejestru decyzji.
 - **Historyczne**: źródło zachowane dla ciągłości, nie bieżące polecenie ani aktualna checklista.

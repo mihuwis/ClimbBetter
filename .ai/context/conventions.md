@@ -14,6 +14,8 @@ Kod i identyfikatory są po angielsku. Dokumentację objaśniamy po polsku, zach
 | `baseEdl`, `edlCount`, `totalMoves`, `executedMoves`                | cztery różne wartości, EDL nie jest długością drogi ---------------------- |
 | `resultType`, `ascentMode`, `familiarityBand`                       | rezultat, deklarowany tryb i znajomość wyprowadzana z historii ----------- |
 | `protectionMode`                                                    | sposób asekuracji `LEAD` albo `TOP_ROPE`; oddzielny od OS/Flash/RP ------- |
+| `gradeIndex`, `gradePoints`, `gradeCalibrationVersion`              | indeks wewnątrz skali, wspólna kalibracja loadu i wersja tej kalibracji -- |
+| `gradeSystemCode`, `inputGradeLabel`, `canonicalGradeId`            | system i etykieta użytkownika oraz kanoniczna wycena użyta w obliczeniach |
 | `moveIntensity`, `classicLoad`, `adjustedLoad`                      | jawne metryki zamiast niejednoznacznych `score`, `points`, `LengthDivisor` |
 | `sessionDate`, `timeZoneId`                                         | lokalna data treningowa i strefa IANA ------------------------------------ |
 | `clientSessionId`, `clientEntryId`, `clientClimbId`, `clientAreaId` | stabilne identyfikatory klienta, niezależne od nazw ---------------------- |

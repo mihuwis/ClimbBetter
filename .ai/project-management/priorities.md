@@ -1,6 +1,6 @@
 # Bieżące priorytety
 
-Data aktualizacji: 2026-10-10. To krótka lista zakresu, nie zestaw poleceń do wykonania jednocześnie.
+Data aktualizacji: 2026-10-11. To krótka lista zakresu, nie zestaw poleceń do wykonania jednocześnie.
 
 ## TO DO NOW
 
@@ -10,7 +10,7 @@ Data aktualizacji: 2026-10-10. To krótka lista zakresu, nie zestaw poleceń do 
 
 Ustalone: jedna sesja obejmuje jedno Area (DEC-018); `.ai` jest wersjonowane w Git (DEC-019); asystent może czytać i wykonywać uzgodnione testy, lecz nie zmienia kodu bez zatwierdzenia (DEC-020); lokalny odzyskiwalny szkic jest wymagany (DEC-021); pierwszy Dashboard używa tekstowych metryk bez dekoracyjnego wykresu (DEC-022).
 
-Pierwszy pion odczytu Dashboardu jest potwierdzony: `GET /api/v1/dashboard/sessions`, `JdbcClient`, migracje `V1`–`V5`, integracyjny PostgreSQL i trwałe środowisko local. Następny krok jest wybrany: dokończyć `TrainingEntryCommand`, a następnie zbudować `POST /api/v1/training/sessions`, transakcyjny zapis i test `POST → PostgreSQL → GET Dashboard`. Pierwszym scenariuszem akceptacyjnym jest sesja boulderowa Bronx opisana w [training](../business/training.md).
+Pierwszy pion zapisu i odczytu jest potwierdzony: `POST /api/v1/training/sessions → PostgreSQL → GET /api/v1/dashboard/sessions`. Test zapisuje sesję Bronx z rozgrzewką i dwoma przejściami oraz odczytuje summary. Następny krok to rozszerzyć Dashboard o zapisaną średnią intensywność, a następnie sprawdzić retry, rollback i konflikt historii bez mnożenia osobnych testów dla każdej klasy.
 
 Plan następnej sesji:
 
@@ -37,7 +37,14 @@ Warunki ukończenia przyrostów: [roadmap](roadmap.md). Faktyczny stan: [progres
 
 ## Start dnia pracy 
 
-Dzisiaj pracujemy nad backendem Java, mam około 2 godziny. Przeczytaj AGENTS.md, .ai\documentation\decisions.md, priorytety, postęp i potrzebne dokumenty oraz sprawdź obecny kod. Przypomnij mi o uruchomieniu Docker Desktop i sprawdzeniu `docker version` przed testami integracyjnymi: Testcontainers uruchamia PostgreSQL w kontenerze. Ja koduję i uruchamiam testy. Ty wyjaśniasz, robisz review i aktualizujesz dokumentację po potwierdzonych zmianach. Prowadź mnie po jednym małym kroku. Pamiętaj, że uczę się Javy i Reacta i nie znam jeszcze wszystkich możliwości tych języków. Pomagaj.
+Dzisiaj pracujemy nad backendem Java, mam około 4-5 godziny. przypomina wczorajszą listę :
+Dodanie brakującego TrainingEntryCommand.
+Czysta kompilacja.
+Minimalne resolvery wyceny, profilu, historii i poziomu dla scenariusza Bronx.
+Kontroler, serwis transakcyjny i repozytorium POST.
+Test POST → PostgreSQL → GET Dashboard.
+Rozszerzenie Dashboardu o intensywność i uzgodnione rekordy.
+ Przeczytaj AGENTS.md, .ai\documentation\decisions.md, priorytety, postęp i potrzebne dokumenty oraz sprawdź obecny kod. Przypomnij mi o uruchomieniu Docker Desktop i sprawdzeniu `docker version` przed testami integracyjnymi: Testcontainers uruchamia PostgreSQL w kontenerze. Ja koduję i uruchamiam testy. Ty wyjaśniasz, robisz review i aktualizujesz dokumentację po potwierdzonych zmianach. Prowadź mnie po jednym małym kroku. Pamiętaj, że uczę się Javy i Reacta i nie znam jeszcze wszystkich możliwości tych języków. Pomagaj.
 
 
 ## Koniec dnia pracy

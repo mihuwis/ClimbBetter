@@ -1,19 +1,19 @@
 # Architektura systemu
 
-Status: stan odczytany z kodu i osobno opisany projekt docelowy; 2026-10-03.
+Status: stan odczytany z kodu i osobno opisany projekt docelowy; 2026-10-11. Materiał do szerszego uzasadnienia decyzji zbierają [notatki do pracy inżynierskiej](engineering-thesis-notes.md).
 
 ## Obecne repozytorium
 
 | Katalog            | Rola i rzeczywisty stan                                                              |
 | ------------------ | ------------------------------------------------------------------------------------ |
-| `backend/`         | szkielet Java/Spring Boot, konfiguracja i testy podstawowe; bez logiki treningowej   |
+| `backend/`         | Java/Spring Boot: Dashboard GET, transakcyjny POST sesji, model obliczeń, resolvery oraz migracje `V1`–`V11` |
 | `backend-net/`     | archiwalny prototyp .NET jako referencja; działania nie zweryfikowano w tej iteracji |
 | `frontend-web/`    | React/TypeScript/Vite, ekrany oparte na mockach ------------------------------------ |
 | `frontend-mobile/` | Flutter, prototyp UI i formularz w pamięci ----------------------------------------- |
-| `infra/`           | tylko `.gitkeep`; brak Compose w tym katalogu -------------------------------------- |
+| `infra/`           | Compose z trwałym lokalnym PostgreSQL 17.6 na porcie hosta `5433`                   |
 | `.ai/`             | bieżąca wiedza, decyzje, dokumentacja i zarządzanie pracą -------------------------- |
 
-Nie ma jeszcze potwierdzonego przepływu frontend → Java → trwały zapis treningu. Diagram [komponentów](diagrams/components.md) odróżnia stan od planu.
+Potwierdzono przepływ HTTP `POST → Java → PostgreSQL → GET Dashboard` na poziomie testu integracyjnego backendu. Frontend nadal korzysta z mocków i nie jest jeszcze podłączony do tego API. Diagram [komponentów](diagrams/components.md) odróżnia stan od planu.
 
 ## Plan docelowy
 
@@ -27,7 +27,7 @@ Jeden modularny monolit Java, jeden projekt Maven i jedna baza PostgreSQL. React
 | `reporting` | przekroje danych dla Dashboardu, kalendarza i analityki ------------------- |
 | `shared`    | małe elementy wspólne; obecnie zegar UTC ---------------------------------- |
 
-Docelowo moduły udostępniają wąskie publiczne API, a implementację chowają w `internal`. Obecnie istnieją deklaracje pakietów i test `ApplicationModules.verify()`; nie potwierdza to wdrożenia portów ani handlerów.
+Moduły udostępniają wąskie publiczne API, a implementację chowają w `internal`. Istnieją deklaracje pakietów i test `ApplicationModules.verify()`. `reporting` udostępnia zapytanie Dashboardu, a `training` komendy wejściowe; serwis transakcyjny zapisu nie jest jeszcze zaimplementowany.
 
 ## Wzorce i powody użycia
 
@@ -35,12 +35,13 @@ Docelowo moduły udostępniają wąskie publiczne API, a implementację chowają
 | ------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
 | Modularny monolit ------------------- | granice funkcji bez kosztu osobnych usług ----------------- | szkielet pakietów i test Modulith istnieją --- |
 | Wstrzykiwany `Clock` ---------------- | kontrolowany czas i testowanie reguł ---------------------- | zaimplementowany zegar UTC i test strefy ----- |
-| Lekki CQRS -------------------------- | osobne operacje zapisu i odczyty dopasowane do ekranów ---- | plan ----------------------------------------- |
-| Porty i adaptery / Clean Architecture | izolacja domeny od HTTP i JPA ----------------------------- | plan wewnątrz modułów, nie osobne moduły Maven |
+| Lekki CQRS -------------------------- | osobne operacje zapisu i odczyty dopasowane do ekranów ---- | odczyt Dashboardu działa; zapis jest w budowie |
+| Fasada domenowa --------------------- | jedno wejście do kalkulatorów i ukrycie szczegółów modelu -- | `TrainingSessionService` używa `TrainingMetricsFacade` podczas zapisu |
+| Elementy Clean Architecture -------- | izolacja domeny obliczeń od HTTP i SQL -------------------- | częściowo wdrożone; nie jest to pełna Clean Architecture |
 | Aggregate root `TrainingSession` ---- | wspólna spójność sesji, wpisów, snapshotów i summary ------ | specyfikacja, brak implementacji ------------- |
-| Snapshot jako value object ---------- | odczyt dawnych wyników bez zależności od obecnych słowników | specyfikacja --------------------------------- |
-| DTO i projekcje odczytu ------------- | API niezależne od encji JPA i układu tabel ---------------- | plan ----------------------------------------- |
-| Idempotencja z ID klienta ----------- | ponowienie zapisu bez drugiej sesji ----------------------- | wymaganie ------------------------------------ |
+| Snapshot historycznych obliczeń ----- | odczyt dawnych wyników bez zależności od obecnych słowników | schemat `V5`/`V9`/`V10`; zapis przez API oczekuje na wdrożenie |
+| Commandy i projekcje odczytu -------- | API niezależne od encji JPA i układu tabel ---------------- | komendy zapisu i projekcja Dashboardu istnieją |
+| Idempotencja z ID klienta ----------- | ponowienie zapisu bez drugiej sesji ----------------------- | fundament w schemacie; obsługa `POST` pozostaje do wdrożenia |
 | Optimistic locking i revisions ------ | jawne konflikty edycji i audyt zmian ---------------------- | plan ----------------------------------------- |
 | Lokalna baza i outbox mobile -------- | trwałość bez sieci i powtarzalna synchronizacja ----------- | późniejszy plan ------------------------------ |
 

@@ -4,7 +4,7 @@ Status: przeniesiona specyfikacja v1 z 2026-08-15; konsolidacja 2026-10-03, iter
 
 Poniżej zachowano pełne tabele, wzory, przykłady i propozycje statystyk z `CB_climbing_effort_valuation.md`. Źródłowy arkusz nie był ponownie odczytywany w tej iteracji. Przykłady w dokumentacji nie zastępują zatwierdzenia 5–10 realnych sesji ani testów kalkulatora.
 
-Wykryte luki kontraktu są w [rejestrze decyzji](../documentation/decisions.md): `OPEN-07` (brak poziomu i preview), `OPEN-10` (niepełne kombinacje reguł stylu), `OPEN-11` (granice estymacji i bandów). Rozgrzewkę rozstrzyga DEC-026. Uzgodnionych wzorów nie zmieniono. Historyczne określenie „iteracja 4 z 4” dotyczy dawnej specyfikacji, nie obecnego porządkowania `.ai`.
+Wykryte luki kontraktu są w [rejestrze decyzji](../documentation/decisions.md), w tym `OPEN-07` dotyczące braku poziomu i preview. Kombinacje stylu oraz granice estymacji i bandów zamykają DEC-031–032, a rozgrzewkę DEC-026. Uzgodnionych wzorów nie zmieniono. Historyczne określenie „iteracja 4 z 4” dotyczy dawnej specyfikacji, nie obecnego porządkowania `.ai`.
 
 ## 1. Cel dokumentu
 
@@ -72,44 +72,86 @@ Frontend nie jest źródłem prawdy dla `gradePoints`, indeksów, mnożników, `
 
 ## 5. Wycena i punkty
 
-Każda pozycja skali ma etykietę, punkty i porządkowy indeks. `BOULDER_FONT` i `ROUTE_FRENCH` są oddzielnymi skalami oraz oddzielnymi rekordami `Grade`, ale odpowiadające sobie stopnie mają te same punkty i indeksy. Mała/wielka litera komunikuje użytkownikowi rodzaj skali, nie zmienia wartości punktowej.
+Każda pozycja skali ma etykietę, punkty i porządkowy indeks. `ROUTE_FRENCH` i `BOULDER_FONT` są oddzielnymi skalami oraz oddzielnymi rekordami `Grade`. `gradeIndex` opisuje kolejność wyłącznie wewnątrz jednej skali i nie służy do porównania balda z drogą. `gradePoints` są wspólną, wersjonowaną kalibracją używaną przez obliczenia loadu.
 
-| Droga/obwód (`ROUTE_FRENCH`) | Bald (`BOULDER_FONT`) | `gradePoints` | `gradeIndex` |
-| ---------------------------- | --------------------- | ------------: | -----------: |
-| 1                            | 1                     |            10 |            0 |
-| 2                            | 2                     |            20 |            1 |
-| 2+                           | 2+                    |            25 |            2 |
-| 3                            | 3                     |            30 |            3 |
-| 3+                           | 3+                    |            35 |            4 |
-| 4                            | 4                     |            40 |            5 |
-| 4+                           | 4+                    |            45 |            6 |
-| 5                            | 5                     |            50 |            7 |
-| 5+                           | 5+                    |            55 |            8 |
-| 6a                           | 6A                    |            60 |            9 |
-| 6a+                          | 6A+                   |            65 |           10 |
-| 6b                           | 6B                    |            70 |           11 |
-| 6b+                          | 6B+                   |            75 |           12 |
-| 6c                           | 6C                    |            80 |           13 |
-| 6c+                          | 6C+                   |            85 |           14 |
-| 7a                           | 7A                    |            90 |           15 |
-| 7a+                          | 7A+                   |            95 |           16 |
-| 7b                           | 7B                    |           100 |           17 |
-| 7b+                          | 7B+                   |           105 |           18 |
-| 7c                           | 7C                    |           110 |           19 |
-| 7c+                          | 7C+                   |           115 |           20 |
-| 8a                           | 8A                    |           120 |           21 |
-| 8a+                          | 8A+                   |           125 |           22 |
-| 8b                           | 8B                    |           130 |           23 |
-| 8b+                          | 8B+                   |           135 |           24 |
-| 8c                           | 8C                    |           140 |           25 |
-| 8c+                          | 8C+                   |           145 |           26 |
-| 9a                           | 9A                    |           150 |           27 |
-| 9a+                          | 9A+                   |           155 |           28 |
-| 9b                           | 9B                    |           160 |           29 |
-| 9b+                          | 9B+                   |           165 |           30 |
-| 9c                           | 9C                    |           170 |           31 |
+Skala drogi i obwodu:
 
-Zakres startowy aplikacji obejmuje `1–9c/9C`. Obwód korzysta ze skali oraz poziomu drogi. Kod nie zakłada, że `9c/9C` pozostanie granicą na zawsze.
+| `ROUTE_FRENCH` | `gradePoints` | `gradeIndex` |
+| -------------- | ------------: | -----------: |
+| 1              |          10.0 |            0 |
+| 2              |          20.0 |            1 |
+| 3              |          25.0 |            2 |
+| 4a             |          30.0 |            3 |
+| 4b             |          35.0 |            4 |
+| 4c             |          40.0 |            5 |
+| 5a             |          45.0 |            6 |
+| 5b             |          50.0 |            7 |
+| 5c             |          55.0 |            8 |
+| 6a             |          60.0 |            9 |
+| 6a+            |          65.0 |           10 |
+| 6b             |          70.0 |           11 |
+| 6b+            |          75.0 |           12 |
+| 6c             |          80.0 |           13 |
+| 6c+            |          85.0 |           14 |
+| 7a             |          90.0 |           15 |
+| 7a+            |          95.0 |           16 |
+| 7b             |         100.0 |           17 |
+| 7b+            |         105.0 |           18 |
+| 7c             |         110.0 |           19 |
+| 7c+            |         115.0 |           20 |
+| 8a             |         120.0 |           21 |
+| 8a+            |         125.0 |           22 |
+| 8b             |         130.0 |           23 |
+| 8b+            |         135.0 |           24 |
+| 8c             |         140.0 |           25 |
+| 8c+            |         145.0 |           26 |
+| 9a             |         150.0 |           27 |
+| 9a+            |         155.0 |           28 |
+| 9b             |         160.0 |           29 |
+| 9b+            |         165.0 |           30 |
+| 9c             |         170.0 |           31 |
+
+Skala balda i kalibracja v1 względem przybliżonej trudności drogi:
+
+| `BOULDER_FONT` | Orientacyjny odpowiednik `ROUTE_FRENCH` | `gradePoints` | `gradeIndex` |
+| -------------- | --------------------------------------- | ------------: | -----------: |
+| 2              | poniżej 4a ----------------------------- |          25.0 |            0 |
+| 3              | poniżej 5a ----------------------------- |          40.0 |            1 |
+| 4-             | 5c -------------------------------------- |          55.0 |            2 |
+| 4              | 6a/6a+ ---------------------------------- |          62.5 |            3 |
+| 4+             | 6a+/6b ---------------------------------- |          67.5 |            4 |
+| 5              | 6b/6b+ ---------------------------------- |          72.5 |            5 |
+| 5+             | 6b+/6c ---------------------------------- |          77.5 |            6 |
+| 6A             | 6c+ ------------------------------------- |          85.0 |            7 |
+| 6A+            | 7a -------------------------------------- |          90.0 |            8 |
+| 6B             | 7a/7a+ ---------------------------------- |          92.5 |            9 |
+| 6B+            | 7a+ ------------------------------------- |          95.0 |           10 |
+| 6C             | 7a+/7b ---------------------------------- |          97.5 |           11 |
+| 6C+            | 7b -------------------------------------- |         100.0 |           12 |
+| 7A             | 7b+ ------------------------------------- |         105.0 |           13 |
+| 7A+            | 7b+/7c ---------------------------------- |         107.5 |           14 |
+| 7B             | 7c/7c+ ---------------------------------- |         112.5 |           15 |
+| 7B+            | 7c+/8a ---------------------------------- |         117.5 |           16 |
+| 7C             | 8a/8a+ ---------------------------------- |         122.5 |           17 |
+| 7C+            | 8b -------------------------------------- |         130.0 |           18 |
+| 8A             | 8b+ ------------------------------------- |         135.0 |           19 |
+| 8A+            | 8c -------------------------------------- |         140.0 |           20 |
+| 8B             | 8c+ ------------------------------------- |         145.0 |           21 |
+| 8B+            | 9a -------------------------------------- |         150.0 |           22 |
+| 8C             | 9a+ ------------------------------------- |         155.0 |           23 |
+| 8C+            | 9b -------------------------------------- |         160.0 |           24 |
+| 9A             | 9b+ ------------------------------------- |         165.0 |           25 |
+| 9A+            | 9c -------------------------------------- |         170.0 |           26 |
+
+Dla zakresu odpowiedników `gradePoints` przyjmuje środek punktów dwóch wycen drogi. Dla opisów „poniżej” kalibracja v1 używa najwyższego stopnia bez przekroczenia wskazanej granicy. Jest to wewnętrzna, przybliżona kalibracja modelu, a nie obietnica dokładnej konwersji sportowej. Źródło porównawcze może zmieniać się między opracowaniami, dlatego snapshot zachowuje `gradePoints` i `gradeCalibrationVersion = 1`.
+
+Zakres startowy obejmuje `ROUTE_FRENCH` od `1` do `9c` oraz `BOULDER_FONT` od `2` do `9A+`. Obwód korzysta ze skali oraz poziomu drogi. Kod nie zakłada, że obecne granice pozostaną niezmienne.
+
+### 5.1. Skale kanoniczne i systemy prezentacji
+
+Obliczenia korzystają z dwóch skal kanonicznych: `BOULDER_FONT` dla baldów oraz `ROUTE_FRENCH` dla dróg i obwodów. Dodatkowe systemy używane przez wspinaczy, np. V-scale dla baldów albo skala Kurtyki dla dróg, są wersjonowanymi mapowaniami wejścia i prezentacji do kanonicznego rekordu `Grade`. Nie tworzą nowego porządku punktowego ani osobnego poziomu użytkownika.
+
+Mapowanie zachowuje system i etykietę podane przez użytkownika, a do obliczeń dostarcza kanoniczne `gradeId`, `gradeIndex` i `gradePoints`. Wiele etykiet może wskazywać ten sam kanoniczny stopień. Przybliżone albo zmienione mapowania wymagają jawnej wersji; nie przepisują istniejących snapshotów.
 
 ## 6. Profile EDL i wpływ długości
 
@@ -125,7 +167,8 @@ Zakres startowy aplikacji obejmuje `1–9c/9C`. Obwód korzysta ze skali oraz po
 | Długa ciągowa -------- | `LONG_CONTINUOUS`        | długa wspinaczka, zwykle ponad 35–40 ruchów  |        40 |
 | Długa cruxowa -------- | `LONG_CRUX`              | długa wspinaczka z cruxem i odpoczynkami --- |        22 |
 | Obwód ---------------- | `CIRCUIT`                | treningowy obwód na panelu ----------------- |        20 |
-| Rozgrzewka ----------- | `WARMUP`                 | ruchy rozgrzewkowe bez punktów ------------- |         0 |
+
+Rozgrzewka nie jest profilem EDL. Korzysta z osobnego `WarmUpEntry`, zapisuje wyłącznie dodatnie `executedMoves` i nie uruchamia obliczenia `edlCount`.
 
 Dla wpisu ocenianego:
 
@@ -150,11 +193,11 @@ Wpis przechowuje osobno `resultType`, deklarowany `ascentMode` i automatyczny `f
 | ----------------------- | ----------------: | ------------ | ---------------------------------- |
 | OS                      |              1.50 | `ASCENT`     | `OS` + `FIRST_CONTACT` ----------- |
 | Flash ----------------- |              1.50 | `ASCENT`     | `FLASH` + `FIRST_CONTACT` -------- |
-| RP słaba znajomość ---- |              1.30 | `ASCENT`     | `RP` + `LOW` --------------------- |
+| RP słaba znajomość ---- |              1.30 | `ASCENT`     | `RP` + `LOW`; także deklarowana znajomość sprzed aplikacji przy braku historii |
 | RP normalny ----------- |              1.00 | `ASCENT`     | `RP` + `NORMAL` ------------------ |
 | RP stały -------------- |              0.75 | `ASCENT`     | `RP` + `ESTABLISHED` ------------- |
 | Attempt OS/Flash ------ |              1.50 | `ATTEMPT`    | `OS` lub `FLASH` + `FIRST_CONTACT` |
-| Attempt słaba znajomość |              1.20 | `ATTEMPT`    | `RP` + `LOW` --------------------- |
+| Attempt słaba znajomość |              1.20 | `ATTEMPT`    | `RP` + `LOW`; także deklarowana znajomość sprzed aplikacji przy braku historii |
 | Attempt normalny ------ |              0.90 | `ATTEMPT`    | `RP` + `NORMAL` ------------------ |
 | Attempt stały --------- |              0.50 | `ATTEMPT`    | `RP` + `ESTABLISHED` ------------- |
 
@@ -171,7 +214,7 @@ Znajomość jest liczona ze wszystkich wcześniejszych prób i przejść tej sam
 
 Użytkownik nie wybiera wariantu słaba/normalna/stała podczas szybkiego logowania. Może go później skorygować w webie, co tworzy revision i ponownie liczy wpis. OS i Flash mają ten sam mnożnik, ale pozostają osobnymi osiągnięciami. Ukończone RP w drugiej albo trzeciej próbie w całej znanej historii wspinaczki daje `fastRp = true`; w odróżnieniu od znajomości ten licznik nie jest ograniczony do dwóch lat. Jest to statystyka/achievement i nie zmienia loadu.
 
-OS/Flash sprzeczne z istniejącą historią wywołuje ostrzeżenie. Zapis jest dozwolony dopiero po jawnym potwierdzeniu, a backend utrwala konflikt i audyt override. Dzięki temu nie tracimy deklaracji przy niepełnej albo błędnie połączonej historii.
+`RP` przy zerowej historii aplikacji oznacza deklarację wcześniejszej znajomości i dla doboru reguły korzysta z `LOW`, mimo zerowego zapisanego licznika. OS/Flash sprzeczne z istniejącą historią wywołuje ostrzeżenie widoczne dla użytkownika. Zapis jest dozwolony dopiero po jawnym potwierdzeniu, zachowuje mnożnik `1.50`, rzeczywistą znajomość oraz konflikt i audyt override.
 
 ## 8. Poziom wspinacza i trudność względna
 
@@ -226,9 +269,9 @@ relativeGradeDiff = gradeIndex - currentLevelIndex
 |                   2 |                                      1.80 |
 |                   3 |                                      2.60 |
 |                   4 |                                      3.50 |
-|                   5 | 5.00, obecnie oznaczone jako „poza skalą” |
+|                   5 |                                      5.00 |
 
-Dla `relativeGradeDiff <= -6` stosujemy dolny floor `0.20`. Dla `relativeGradeDiff >= 5` stosujemy górny cap `5.00`. Snapshot zachowuje rzeczywistą różnicę oraz `outsideCalibratedRange = true`, gdy wartość leży poza skalibrowanym zakresem. Brak pasującej reguły nie może po cichu dać mnożnika `0`.
+Dla `relativeGradeDiff <= -6` stosujemy dolny floor `0.20`. Dla `relativeGradeDiff >= 5` stosujemy górny cap `5.00`. Dokładne granice `-6` i `+5` są jeszcze w skalibrowanym zakresie; `outsideCalibratedRange = true` dopiero dla wartości `< -6` albo `> 5`. Snapshot zachowuje rzeczywistą różnicę. Brak pasującej reguły nie może po cichu dać mnożnika `0`.
 
 ## 9. Kolejność obliczeń wpisu
 

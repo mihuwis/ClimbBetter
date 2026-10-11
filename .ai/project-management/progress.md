@@ -1,14 +1,14 @@
 # Stan projektu i prognoza
 
-Data aktualizacji: 2026-10-10. Metoda: odczyt kodu, potwierdzone polecenia użytkownika i raporty testów. Pełny zestaw testów przeszedł po dodaniu modelu obliczeń i agregacji. Następnie celowany test integracyjny Dashboardu potwierdził migrację `V5`; początkowy błąd dotyczył wyłącznie oczekiwanej skali `BigDecimal` po przejściu z dwóch do czterech miejsc.
+Data aktualizacji: 2026-10-11. Metoda: odczyt kodu, potwierdzone polecenia użytkownika i raporty testów. Pełny zestaw testów przeszedł po dodaniu modelu obliczeń i agregacji. Celowany test integracyjny Dashboardu potwierdził następnie migracje do `V6`, w tym utworzenie i zasilenie dwóch słowników wycen.
 
 ## Stan obszarów
 
 | Obszar                      | Co jest                                                                                                                         | Czego brakuje / co nie jest potwierdzone                                                           | Ocena                                         |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Produkt i wycena ---------- | tabele, wzory, DEC-001–018, wymagania web z września; zatwierdzone jedno Area na sesję ---------------------------------------- | luki stylu/czasu/poziomu i 5–10 realnych zatwierdzonych golden cases ----------------------------- | specyfikacja zaawansowana, nadal pytania ---- |
-| Java ---------------------- | bootstrap, GET Dashboardu, kalkulatory EDL/intensywności/loadu, model rozgrzewki, agregacja metryk, szkic komendy sesji i testy domenowe/integracyjne | brakujący `TrainingEntryCommand`, zapis sesji, resolvery słowników/historii, Details i OpenAPI | odczyt i fundament obliczeń działają -------- |
-| PostgreSQL i infrastruktura | Flyway `V1`–`V5`, tabele użytkowników, Area, sesji i wpisów, testowy/local seed, PostgreSQL 17.6 w Testcontainers i Compose local | słowniki wycen/profili, katalog wspinaczek, repozytorium zapisu i dane utworzone przez API ---------- | fundament zapisu istnieje, brak `POST` ------ |
+| Java ---------------------- | bootstrap, GET Dashboardu, transakcyjny POST sesji, resolvery, kalkulatory i potwierdzony test `POST → PostgreSQL → GET` | Details, pełna idempotencja z fingerprintem, błędy API i OpenAPI | pierwszy pion zapisu/odczytu działa |
+| PostgreSQL i infrastruktura | Flyway `V1`–`V11`, tabele i snapshoty pierwszego pionu, słowniki/reguły, Testcontainers i trwały Compose local | scenariusze rollbacku, retry, konfliktu historii i zapis local przez API | baza obsługuje pierwszy zapis |
 | Web ----------------------- | Dashboard, Calendar, Areas, Session Details i routing ------------------------------------------------------------------------- | Record session, lokalny trwały szkic, integracja API, nowe metryki i grupowanie, testy komponentów | prototyp na mockach ------------------------- |
 | Mobile -------------------- | shell, Board, profil, formularz i widget test --------------------------------------------------------------------------------- | HTTP, trwałe dane, outbox, sync, rozdzielenie EDL/ruchów ----------------------------------------- | prototyp w pamięci -------------------------- |
 | Historia i audyt ---------- | opis snapshotów, client ID, archiwizacji i revisions -------------------------------------------------------------------------- | implementacja i testy scenariuszy ---------------------------------------------------------------- | zaplanowane --------------------------------- |
@@ -22,7 +22,9 @@ Aktualizacja 2026-10-03: powstał pierwszy mały element domeny Java, `Familiari
 
 Weryfikacja 2026-10-04: po uruchomieniu Docker Desktop pełne `./mvnw test` zakończyło się sukcesem. Potwierdzono 7 testów `FamiliarityBand`, 2 testy kontekstu Spring i zegara UTC oraz 1 test granic Modulith. PostgreSQL został uruchomiony tymczasowo przez Testcontainers.
 
-Weryfikacja 2026-10-10: powstał `GET /api/v1/dashboard/sessions` z read modelem i filtrowaniem przez `CurrentUserProvider`. Local zastosował `V1`–`V4`, a ręczny GET zwrócił `[]`. Później dodano model klasyfikacji, ruchów, rozgrzewki, kalkulatory EDL/intensywności/loadów i agregację sesji; użytkownik potwierdził pełny zielony zestaw testów. `V5` utworzyła `training_entries` i zwiększyła skalę loadów do czterech miejsc; celowany test integracyjny przeszedł po aktualizacji oczekiwanych wartości. `CreateTrainingSessionCommand` istnieje, lecz wskazany `TrainingEntryCommand` nie jest obecny w aktualnych źródłach, więc komenda zapisu nie jest jeszcze kompletna.
+Weryfikacja 2026-10-10: powstał `GET /api/v1/dashboard/sessions` z read modelem i filtrowaniem przez `CurrentUserProvider`. Local zastosował `V1`–`V4`, a ręczny GET zwrócił `[]`. Później dodano model klasyfikacji, ruchów, rozgrzewki, kalkulatory EDL/intensywności/loadów i agregację sesji; użytkownik potwierdził pełny zielony zestaw testów. `V5` utworzyła `training_entries` i zwiększyła skalę loadów do czterech miejsc; celowany test integracyjny przeszedł po aktualizacji oczekiwanych wartości. Tego dnia `CreateTrainingSessionCommand` nadal nie miała brakującego wówczas `TrainingEntryCommand`.
+
+Weryfikacja 2026-10-11: dodano `TrainingEntryCommand` i potwierdzono czystą kompilację. Ustalono niezależne skale `ROUTE_FRENCH` i `BOULDER_FONT`, lokalne indeksy oraz wspólną kalibrację punktów v1. Migracje `V6`–`V10` dodały wyceny, profile, wspinaczki, pełniejszy snapshot i reguły obliczeń. `V11` uzupełniła summary sesji o czas i średnią intensywność oraz usunęła błędny wymóg ukończonej wyceny. Powstały resolvery, `TrainingMetricsFacade`, transakcyjny `TrainingSessionService`, repozytorium oraz `POST /api/v1/training/sessions`. `TrainingSessionFlowIntegrationTest` uruchomił PostgreSQL 17.6 przez Testcontainers, wysłał sesję Bronx z rozgrzewką i dwoma przejściami, potwierdził trzy wpisy w bazie oraz odczytał 36 ruchów i maksymalną wycenę `6A` przez Dashboard. Pierwszy błąd testu ujawnił opcjonalny boolean rozgrzewki, drugi brak mapowania `Instant` w JDBC; oba przypadki poprawiono, a kolejny przebieg zakończył się sukcesem.
 
 ## Weryfikacja iteracji dokumentacji 1
 
@@ -38,7 +40,7 @@ Odpowiedzi użytkownika zamknęły OPEN-01, OPEN-02 i OPEN-05 oraz część OPEN
 
 | Przyrost                    | Stan                                      | Co rozstrzyga ukończenie                                      |
 | --------------------------- | ----------------------------------------- | ------------------------------------------------------------- |
-| APP-01 — zapis/odczyt Java  | nieukończony; działa pierwszy odczyt Dashboardu | test rzeczywistego zapisu, obliczeń, rollbacku i idempotencji |
+| APP-01 — zapis/odczyt Java  | częściowo ukończony; działa pion `POST → PostgreSQL → GET Dashboard` | testy rollbacku, retry/fingerprintu i konfliktu historii oraz Details |
 | APP-02 — pełny przepływ web | nieukończony; jest prototyp ekranów ----- | powtarzalny zapis i ponowny odczyt treningu przez UI -------- |
 | APP-03–06 ----------------- | brak potwierdzonego ukończonego przyrostu | kryteria w roadmapie, do doprecyzowania przed pracą --------- |
 

@@ -1,6 +1,6 @@
 # Uruchomienie i weryfikacja
 
-Status: zweryfikowane uruchomienie testowe i lokalne; aktualizacja 2026-10-10.
+Status: zweryfikowane uruchomienie testowe i lokalne; aktualizacja 2026-10-11.
 
 Polecenia poniżej wykonuje użytkownik albo asystent w wyraźnie zleconym zakresie. Nie są automatycznym poleceniem ich wykonania przez agenta.
 
@@ -47,15 +47,15 @@ docker compose -f infra/compose.yml ps
 
 Serwis mapuje host `127.0.0.1:5433` na port PostgreSQL `5432` w kontenerze. Port hosta 5433 wybrano, ponieważ 5432 był już używany przez inną lokalną instancję. Nazwany wolumen zachowuje dane po `stop`, `down` i restarcie Docker Desktop; `down -v` usuwa dane i nie jest zwykłym poleceniem zatrzymania.
 
-Profil `local` odczytuje `CB_DB_URL`, `CB_DB_USERNAME` i `CB_DB_PASSWORD`. Dla obecnego Compose URL ma postać `jdbc:postgresql://127.0.0.1:5433/climbbetter`.
+Profil `local` ma wartości domyślne zgodne z Compose: URL `jdbc:postgresql://127.0.0.1:5433/climbbetter`, użytkownika `climbbetter` i hasło przeznaczone wyłącznie do lokalnego kontenera. Opcjonalne `CB_DB_URL`, `CB_DB_USERNAME` i `CB_DB_PASSWORD` nadpisują te wartości, np. dla innego środowiska deweloperskiego.
 
-Po ustawieniu zmiennych uruchomienie z katalogu `backend`:
+Uruchomienie z katalogu `backend` nie wymaga ręcznego ustawiania zmiennych:
 
 ```powershell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-Uruchomienie z 2026-10-10 połączyło się z PostgreSQL 17.6, zastosowało migracje `V1`–`V4` i wystartowało na porcie 8080. `curl http://localhost:8080/api/v1/dashboard/sessions` zwrócił `[]`. Swagger UI nadal nie jest skonfigurowany.
+Uruchomienie z 2026-10-11 połączyło się z PostgreSQL 17.6, zastosowało migracje do `V6` i wystartowało na porcie 8080. DBeaver potwierdził tabelę `catalog.grades` wraz z danymi obu skal. Wcześniejsze ręczne `curl http://localhost:8080/api/v1/dashboard/sessions` zwróciło `[]`. Swagger UI nadal nie jest skonfigurowany.
 
 ## Flutter
 

@@ -1,10 +1,10 @@
 # Model danych i relacje z bazą
 
-Status: **częściowo wdrożone migracje Java/Flyway**; aktualizacja 2026-10-10.
+Status: **częściowo wdrożone migracje Java/Flyway**; aktualizacja 2026-10-11.
 
-Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V5` tworzą schematy `identity`, `catalog`, `training`, `reporting` oraz tabele `users`, `areas`, `training_sessions` i `training_entries`. Nie ma jeszcze encji zapisu JPA ani pozostałych tabel docelowego modelu. Poniższy pełny schemat nadal opisuje kierunek, a nie kompletny stan wdrożenia.
+Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V11` tworzą schematy modułów, tabele pierwszego pionu zapisu, słowniki wycen, profile i reguły obliczeń. Zapis korzysta bezpośrednio z `JdbcClient`, bez encji JPA. Poniższy pełny model nadal obejmuje także elementy późniejszych etapów.
 
-Pusta lokalna baza PostgreSQL 17.6 przyjęła migracje `V1`–`V4` podczas ręcznego uruchomienia. Migracja `V5` wykonała się w Testcontainers; po dostosowaniu oczekiwanej skali `BigDecimal` integracyjny test Dashboardu ponownie przeszedł.
+PostgreSQL 17.6 w Testcontainers przyjął migracje `V1`–`V11`. Potwierdzony test pionowy utworzył prywatne Area i wspinaczki, zapisał sesję z trzema wpisami oraz odczytał jej summary przez Dashboard. Lokalna baza korzysta z tego samego przypiętego obrazu i migracji Flyway.
 
 Poniżej zachowano szczegółowe definicje encji, pól, snapshotów, relacji, warstw i ograniczeń z [CB_model](../archive/source-snapshot/docs/CB_model.md), wraz z numeracją sekcji źródłowych. Wzory i wartości liczbowe mają źródło nadrzędne w [grading-and-scoring](../business/grading-and-scoring.md). [ERD](diagrams/data-model.md) przedstawia logiczny model planowany, nie wygenerowany schemat PostgreSQL.
 
@@ -171,19 +171,25 @@ Stabilna tożsamość balda, drogi z liną albo obwodu.
 
 Pozycja rozszerzalnego słownika wycen.
 
-| Pole         | Znaczenie                                |
-| ------------ | ---------------------------------------- |
-| `id`         | stabilny UUID -------------------------- |
-| `label`      | etykieta prezentacyjna, np. `6B+` ------ |
-| `scaleType`  | `BOULDER_FONT` albo `ROUTE_FRENCH` ----- |
-| `points`     | punkty obiektywne modelu --------------- |
-| `gradeIndex` | porządkowy indeks do porównania poziomów |
-| `sortOrder`  | kolejność wyświetlania ----------------- |
-| `isActive`   | możliwość wyboru w nowych wpisach ------ |
+| Pole                 | Znaczenie ------------------------------------------------------------------ |
+| -------------------- | -------------------------------------------------------------------------- |
+| `id`                 | stabilny UUID ------------------------------------------------------------ |
+| `label`              | etykieta prezentacyjna, np. `6B+` ---------------------------------------- |
+| `scaleType`          | `BOULDER_FONT` albo `ROUTE_FRENCH` --------------------------------------- |
+| `gradePoints`        | wspólna, przybliżona miara wejściowa do obliczeń loadu ------------------ |
+| `gradeIndex`         | porządek stopnia wyłącznie wewnątrz jednej skali ------------------------ |
+| `calibrationVersion` | wersja kalibracji `gradePoints` ------------------------------------------ |
+| `isActive`           | możliwość wyboru w nowych wpisach ---------------------------------------- |
 
-Skale mają oddzielne rekordy, zakres `1–9c/9C` oraz wspólne punkty i indeksy dla odpowiadających sobie stopni. Droga `6a` i bald `6A` mają po 60 punktów, ale pozostają rozróżnialne przez skalę. Obwód używa `ROUTE_FRENCH`.
+Skale mają oddzielne rekordy i własne indeksy. `ROUTE_FRENCH` obejmuje początkowo `1–9c`, a `BOULDER_FONT` `2, 3, 4-, 4, 4+, 5, 5+, 6A…9A+`. Punkty balda wynikają z wersjonowanej kalibracji względem orientacyjnych odpowiedników dróg; nie oznacza to dokładnej konwersji między dyscyplinami. Obwód używa `ROUTE_FRENCH`.
 
-Historyczna sesja nie pobiera ponownie `points` ani `gradeIndex` z aktualnego `Grade`.
+Historyczna sesja nie pobiera ponownie `gradePoints`, `gradeIndex` ani `calibrationVersion` z aktualnego `Grade`.
+
+#### 4.6.1. `GradeAlias`
+
+Przyszłe systemy wejścia i prezentacji nie powielają punktacji. Rekord aliasu zawiera `systemCode`, etykietę użytkownika, `canonicalGradeId`, `mappingVersion` i `isActive`. Przykładowo `BOULDER_V:V10` może wskazywać kanoniczny rekord `BOULDER_FONT:7C+`, a zatwierdzona etykieta skali Kurtyki rekord `ROUTE_FRENCH`. Snapshot zachowuje oryginalny system i etykietę oraz kanoniczne dane użyte w obliczeniu.
+
+Unikalność obowiązuje dla `(systemCode, label, mappingVersion)`. Zmiana przybliżonego mapowania tworzy nową wersję i nie przelicza automatycznie historii.
 
 ### 4.7. `EffortProfile`
 
@@ -194,8 +200,9 @@ Profil EDL opisujący charakter i spodziewaną długość trudnej części wspin
 | `id`, `code`, `name` | stabilna tożsamość techniczna i nazwa |
 | `baseEdl`            | wartość startowa używana w obliczeniu |
 | `description`        | podpowiedź dla użytkownika ---------- |
-| `isWarmup`           | czy profil oznacza rozgrzewkę ------- |
 | `isActive`           | dostępność w nowych wpisach --------- |
+
+Słownik zawiera wyłącznie dodatnie profile EDL ocenianych wpisów. Rozgrzewka jest osobnym wariantem wpisu i nie wskazuje `EffortProfile`.
 
 Profil jest wybierany dla konkretnego wpisu. Nie jest tym samym co `climbType` ani `totalMoves`.
 
@@ -306,6 +313,8 @@ Minimalna zawartość:
 - opcjonalnie `calculatedAt`.
 
 Snapshot nie jest osobnym agregatem. W PostgreSQL jest zestawem jawnych kolumn tabeli `training_entries`; ułatwia to filtrowanie, agregowanie i audyt.
+
+`Grade` należy do dokładnie jednej skali. Kluczowe pola słownika to `scaleCode`, `label`, `gradeIndex`, `gradePoints`, `calibrationVersion` i `isActive`. `gradeIndex` jest unikalny tylko w obrębie skali i zasila różnicę względem poziomu użytkownika tej samej dyscypliny. `gradePoints` mogą być wspólne między skalami i dla balda wynikają z jawnej kalibracji v1; snapshot wpisu zachowuje użyte punkty oraz wersję kalibracji.
 
 ### 4.13. `SessionSummary`
 

@@ -45,7 +45,7 @@ Sposób asekuracji drogi jest osobnym wymiarem: `protectionMode` ma obecnie `LEA
 
 Rozgrzewka jest osobnym wariantem wpisu. Wymaga wyłącznie dodatniego `executedMoves`; nie wymaga wspinaczki, wyceny, `totalMoves`, profilu EDL, `ascentMode` ani `protectionMode`. Nie ma `edlCount` ani `moveIntensity`, wnosi jednak wykonane ruchy do sumy sesji. Jej `classicLoad` i `adjustedLoad` wynoszą `0` (DEC-026).
 
-Konflikt OS/Flash z historią wymaga jawnego potwierdzenia i audytu. Zatwierdzona możliwość override nie rozstrzyga wszystkich szczegółów doboru mnożnika; luka jest zapisana jako `OPEN-10`.
+Konflikt OS/Flash z historią wymaga pokazania użytkownikowi ostrzeżenia, jawnego potwierdzenia i audytu. Po potwierdzeniu deklaracja zachowuje mnożnik `1.50`, a snapshot rzeczywistą znajomość. `RP` bez historii aplikacji oznacza deklarowaną znajomość sprzed aplikacji i korzysta z bandu `LOW` (DEC-031).
 
 ## Katalog i szybkie logowanie
 
@@ -59,7 +59,7 @@ Decyzja DEC-018 potwierdza jedno `TrainingSession.areaId`. Pytanie `OPEN-03` zos
 
 ## Obliczenia i historia
 
-Backend wylicza wyniki z faktów użytkownika, słowników, historii i poziomu odniesienia. Frontend nie dostarcza wiążących wyników. Typ wspinania wyznacza skalę i poziom: `BOULDER` korzysta z balda, `ROUTE` i `CIRCUIT` z drogi.
+Backend wylicza wyniki z faktów użytkownika, słowników, historii i poziomu odniesienia. Frontend nie dostarcza wiążących wyników. Typ wspinania wyznacza kanoniczną skalę i poziom: `BOULDER` korzysta z `BOULDER_FONT`, a `ROUTE` i `CIRCUIT` z `ROUTE_FRENCH`. Indeksy wycen są porównywane tylko wewnątrz tej samej skali. Wspólne `gradePoints` są wersjonowaną kalibracją loadu, a nie dokładną konwersją etykiet między skalami. Dodatkowe systemy wejścia i prezentacji, takie jak V-scale lub skala Kurtyki, mapują się wersjonowanie na kanoniczny `Grade` i nie zmieniają kalkulatorów.
 
 Poziom wspierany piramidą, najwyższa ukończona wycena, profil OS/Flash/Fast RP/RP i confidence są różnymi informacjami. Confidence objaśnia siłę dowodów; nie jest dodatkową wagą loadu.
 

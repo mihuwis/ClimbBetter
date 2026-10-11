@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${CB_DB_URL}
-    username: ${CB_DB_USERNAME}
-    password: ${CB_DB_PASSWORD}
+    url: ${CB_DB_URL:jdbc:postgresql://127.0.0.1:5433/climbbetter}
+    username: ${CB_DB_USERNAME:climbbetter}
+    password: ${CB_DB_PASSWORD:climbbetter-local}
 
   flyway:
     locations:
