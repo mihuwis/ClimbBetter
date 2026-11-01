@@ -29,6 +29,9 @@ class AreaResolver {
             String areaName
     ) {
         if (areaId != null) {
+            if (clientAreaId != null) {
+                throw new IllegalArgumentException("Use either area ID or client area ID");
+            }
             return findExisting(userId, areaId);
         }
 
@@ -89,6 +92,7 @@ class AreaResolver {
                         WHERE owner_id = :userId
                           AND client_area_id = :clientAreaId
                           AND is_archived = false
+                          AND resolution_status <> 'MERGED'
                         """)
                 .param("userId", userId)
                 .param("clientAreaId", clientAreaId)

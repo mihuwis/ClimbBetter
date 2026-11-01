@@ -2,6 +2,10 @@
 
 Status: **częściowo wdrożone migracje Java/Flyway**; aktualizacja 2026-10-11.
 
+Aktualizacja 2026-10-17: Flyway zastosował na local również `V15`: kraj/region Area, tabela Sector, wersjonowane aliasy wycen, opcjonalna wycena katalogowego projektu i długość Climb w metrach. Zaimportowano publiczną Dolinę Bolechowicką i 28 pozycji Filaru Abazego; dane i dostęp potwierdzono SQL. [Szczegóły](outdoor-catalog.md).
+
+Aktualizacja 2026-10-17: w kodzie dodano `V13` z tabelą rewizji sesji i `V14` z `deleted_at`. Edycja zapisuje snapshot przed/po, a usunięcie zachowuje dane i audyt, wykluczając sesję z odczytów oraz historii do obliczeń. Kompilacja przeszła; zastosowanie nowych migracji na PostgreSQL czeka na testy. Szczegóły: [backend-crud-handoff](backend-crud-handoff.md).
+
 Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V12` tworzą schematy modułów, tabele pierwszego pionu zapisu, słowniki wycen, profile, reguły obliczeń i fingerprint żądania sesji. Zapis korzysta bezpośrednio z `JdbcClient`, bez encji JPA. Poniższy pełny model nadal obejmuje także elementy późniejszych etapów.
 
 PostgreSQL 17.6 w Testcontainers przyjął migracje `V1`–`V12`. Potwierdzony test pionowy utworzył prywatne Area i wspinaczki, zapisał sesję z trzema wpisami oraz odczytał jej summary przez Dashboard. Testy potwierdziły też rollback całego agregatu, brak duplikatu po identycznym retry oraz zachowanie pierwotnego rekordu po konflikcie fingerprintu. Lokalna baza korzysta z tego samego przypiętego obrazu i migracji Flyway.
@@ -467,6 +471,7 @@ Read modele mogą zawierać pola wyprowadzone, np. charakter sesji `MIXED`, ale 
 - `Area`, `Sector`, `Climb` i pozycje słowników są dezaktywowane lub archiwizowane zamiast fizycznie usuwane.
 - `TrainingEntry` pozostaje czytelny dzięki snapshotowi nawet po archiwizacji powiązanego `Climb`.
 - Każda edycja starego wpisu wpływająca na obliczenie zapisuje pełny poprzedni i nowy snapshot, użytkownika, czas i typ/powód operacji.
+- Edycja przelicza edytowaną sesję, ale nie uruchamia automatycznej kaskady przez późniejsze sesje. Ich zapisane snapshoty pozostają historyczne.
 - Masowa reewaluacja po korekcie wyceny jest osobną, jawną operacją i również pozostawia `CalculationRevision`.
 - Zmiana słownika nigdy automatycznie nie uruchamia reewaluacji.
 

@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import pl.climbbetter.training.TrainingEntryCommand;
 import pl.climbbetter.training.TrainingSessionDetails;
+import pl.climbbetter.training.TrainingSessionSummary;
 import pl.climbbetter.training.TrainingSessionDetails.CalculationDetails;
 import pl.climbbetter.training.TrainingSessionDetails.EntryDetails;
 import pl.climbbetter.training.TrainingSessionDetails.HistoryDetails;
@@ -40,7 +41,7 @@ class TrainingSessionRepository {
         );
 
         return jdbcClient.sql("""
-                        SELECT id, request_fingerprint
+                        SELECT id, request_fingerprint, deleted_at IS NOT NULL AS deleted
                         FROM training.training_sessions
                         WHERE user_id = :userId
                           AND client_session_id = :clientSessionId
@@ -55,10 +56,26 @@ class TrainingSessionRepository {
                                 ),
                                 resultSet.getString(
                                         "request_fingerprint"
-                                )
+                                ),
+                                resultSet.getBoolean("deleted")
                         )
                 )
                 .optional();
+    }
+
+    List<TrainingSessionSummary> findByDateRange(UUID userId, LocalDate from, LocalDate to) {
+        return jdbcClient.sql("""
+                        SELECT id AS session_id, session_name, session_date,
+                               location_name_snapshot AS area_name, duration_minutes,
+                               total_moves, classic_load, adjusted_load, average_move_intensity,
+                               max_boulder_grade, max_route_grade
+                        FROM training.training_sessions
+                        WHERE user_id = :userId AND deleted_at IS NULL
+                          AND session_date BETWEEN :fromDate AND :toDate
+                        ORDER BY session_date DESC, started_at DESC, id
+                        """)
+                .param("userId", userId).param("fromDate", from).param("toDate", to)
+                .query(TrainingSessionSummary.class).list();
     }
 
     void insertSession(SessionRow session) {
@@ -469,8 +486,7 @@ class TrainingSessionRepository {
                             average_move_intensity = :averageMoveIntensity,
                             max_boulder_grade = :maxBoulderGrade,
                             max_route_grade = :maxRouteGrade,
-                            updated_at = :updatedAt,
-                            version = version + 1
+                            updated_at = :updatedAt
                         WHERE id = :sessionId
                         """)
                 .param("totalMoves", summary.totalMoves())
@@ -503,6 +519,8 @@ class TrainingSessionRepository {
         return jdbcClient.sql("""
                         SELECT
                             id,
+                            client_session_id,
+                            version,
                             session_name,
                             session_date,
                             time_zone_id,
@@ -520,6 +538,7 @@ class TrainingSessionRepository {
                         FROM training.training_sessions
                         WHERE id = :sessionId
                           AND user_id = :userId
+                          AND deleted_at IS NULL
                         """)
                 .param("sessionId", sessionId)
                 .param("userId", userId)
@@ -529,6 +548,11 @@ class TrainingSessionRepository {
                                         "id",
                                         UUID.class
                                 ),
+                                resultSet.getObject(
+                                        "client_session_id",
+                                        UUID.class
+                                ),
+                                resultSet.getLong("version"),
                                 resultSet.getString("session_name"),
                                 resultSet.getObject(
                                         "session_date",
@@ -611,6 +635,7 @@ class TrainingSessionRepository {
                           ON session.id = entry.session_id
                         WHERE session.id = :sessionId
                           AND session.user_id = :userId
+                          AND session.deleted_at IS NULL
                         ORDER BY entry.entry_order
                         """)
                 .param("sessionId", sessionId)
@@ -733,6 +758,8 @@ class TrainingSessionRepository {
 
     record SessionDetailsRow(
             UUID sessionId,
+            UUID clientSessionId,
+            long version,
             String sessionName,
             LocalDate sessionDate,
             String timeZoneId,
@@ -752,6 +779,8 @@ class TrainingSessionRepository {
         TrainingSessionDetails toDetails(List<EntryDetails> entries) {
             return new TrainingSessionDetails(
                     sessionId,
+                    clientSessionId,
+                    version,
                     sessionName,
                     sessionDate,
                     timeZoneId,
@@ -773,7 +802,8 @@ class TrainingSessionRepository {
 
     record ExistingSession(
             UUID id,
-            String requestFingerprint
+            String requestFingerprint,
+            boolean deleted
     ) {
     }
 
@@ -798,5 +828,116 @@ class TrainingSessionRepository {
             String maxRouteGrade,
             Instant createdAt
     ) {
+    }
+
+    void markDeleted(UUID userId, UUID sessionId, Instant deletedAt) {
+        jdbcClient.sql("""
+                        UPDATE training.training_sessions
+                        SET deleted_at = :deletedAt,
+                            updated_at = :deletedAt
+                        WHERE id = :sessionId
+                          AND user_id = :userId
+                          AND deleted_at IS NULL
+                        """)
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .param("deletedAt", databaseTimestamp(deletedAt))
+                .update();
+    }
+
+    void updateSessionHeader(SessionRow session) {
+        jdbcClient.sql("""
+                        UPDATE training.training_sessions
+                        SET area_id = :areaId,
+                            session_name = :sessionName,
+                            session_date = :sessionDate,
+                            time_zone_id = :timeZoneId,
+                            duration_minutes = :durationMinutes,
+                            started_at = :startedAt,
+                            ended_at = :endedAt,
+                            location_name_snapshot = :locationName,
+                            request_fingerprint = :requestFingerprint
+                        WHERE id = :sessionId
+                          AND user_id = :userId
+                        """)
+                .param("sessionId", session.id())
+                .param("userId", session.userId())
+                .param("areaId", session.areaId())
+                .param("sessionName", session.sessionName())
+                .param("sessionDate", session.sessionDate())
+                .param("timeZoneId", session.timeZoneId())
+                .param("durationMinutes", session.durationMinutes())
+                .param("startedAt", databaseTimestamp(session.startedAt()))
+                .param("endedAt", databaseTimestamp(session.endedAt()))
+                .param("locationName", session.locationName())
+                .param("requestFingerprint", session.requestFingerprint())
+                .update();
+    }
+
+    void insertRevision(
+            UUID userId,
+            UUID sessionId,
+            long revisionNumber,
+            String changeReason,
+            String beforeState,
+            String afterState,
+            Instant createdAt
+    ) {
+        jdbcClient.sql("""
+                        INSERT INTO training.training_session_revisions (
+                            id, session_id, changed_by_user_id,
+                            revision_number, change_reason,
+                            before_state, after_state, created_at
+                        )
+                        VALUES (
+                            :id, :sessionId, :userId,
+                            :revisionNumber, :changeReason,
+                            CAST(:beforeState AS jsonb),
+                            CAST(:afterState AS jsonb), :createdAt
+                        )
+                        """)
+                .param("id", UUID.randomUUID())
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .param("revisionNumber", revisionNumber)
+                .param("changeReason", changeReason)
+                .param("beforeState", beforeState)
+                .param("afterState", afterState)
+                .param("createdAt", databaseTimestamp(createdAt))
+                .update();
+    }
+
+    boolean advanceVersion(
+            UUID userId,
+            UUID sessionId,
+            long expectedVersion
+    ) {
+        return jdbcClient.sql("""
+                        UPDATE training.training_sessions
+                        SET version = version + 1
+                        WHERE id = :sessionId
+                          AND user_id = :userId
+                          AND version = :expectedVersion
+                          AND deleted_at IS NULL
+                        """)
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .param("expectedVersion", expectedVersion)
+                .update() == 1;
+    }
+
+    void deleteEntries(UUID userId, UUID sessionId) {
+        jdbcClient.sql("""
+                        DELETE FROM training.training_entries
+                        WHERE session_id IN (
+                            SELECT id
+                            FROM training.training_sessions
+                            WHERE id = :sessionId
+                              AND user_id = :userId
+                        )
+                        """)
+                .param("sessionId", sessionId)
+                .param("userId", userId)
+                .update();
     }
 }

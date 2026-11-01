@@ -1,32 +1,12 @@
-import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
+import { useResource } from '../shared/api/useResource';
+import type { CurrentUser } from '../features/training/model/session.types';
 
-type AppLayoutProps = {
-  children: ReactNode;
-};
-
-export function AppLayout({ children }: AppLayoutProps) {
-  return (
-    <div className="app">
-      <header className="top-nav">
-        <div className="logo">ClimbBetter</div>
-
-        <nav className="main-nav">
-          <NavLink to="/">Dashboard</NavLink>
-
-          <NavLink to="/calendar">
-            Calendar
-          </NavLink>
-
-          <NavLink to="/areas">
-            Areas
-          </NavLink>
-        </nav>
-
-        <div className="user-menu">Michał</div>
-      </header>
-
-      {children}
-    </div>
-  );
+export function AppLayout() {
+  const user = useResource<CurrentUser>('/identity/me');
+  return <div className="app"><header className="top-nav">
+    <NavLink className="logo" to="/">Climb<span>Better</span></NavLink>
+    <nav className="main-nav" aria-label="Main navigation"><NavLink to="/" end>Dashboard</NavLink><NavLink to="/calendar">Calendar</NavLink><NavLink to="/areas">Areas</NavLink></nav>
+    <div className="user-menu">{user.data?.displayName ?? 'Climbing journal'}</div>
+  </header><Outlet/></div>;
 }

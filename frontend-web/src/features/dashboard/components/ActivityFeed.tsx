@@ -1,23 +1,7 @@
-import type { ActivityFeedItem } from '../../../shared/types/dashboard.types';
+import type { SessionSummary } from '../../training/model/session.types';
 import { ActivityCard } from './ActivityCard';
-
-type ActivityFeedProps = {
-  activities: ActivityFeedItem[];
-};
-
-export function ActivityFeed({ activities }: ActivityFeedProps) {
-  return (
-    <>
-      <div className="feed-header">
-        <select>
-          <option>My activities</option>
-          <option>Friends activities</option>
-        </select>
-      </div>
-
-      {activities.map((activity) => (
-        <ActivityCard key={activity.id} activity={activity} />
-      ))}
-    </>
-  );
+export function ActivityFeed({ activities }: { activities: SessionSummary[] }) {
+  return activities.length ? <div className="stack">{activities.map(activity =>
+    <ActivityCard key={activity.sessionId} activity={activity} />)}</div>
+    : <section className="card empty-state"><h2>Your first session starts here</h2><p>Record a past training or start climbing now.</p></section>;
 }

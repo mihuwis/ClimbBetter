@@ -1,3 +1,4 @@
+// Calendar dates stay local date strings; never convert sessionDate through UTC.
 export type CalendarDay = {
   date: string;
   dayOfMonth: number;

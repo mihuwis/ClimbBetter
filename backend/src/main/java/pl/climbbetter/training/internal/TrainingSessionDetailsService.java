@@ -4,6 +4,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.climbbetter.identity.CurrentUserProvider;
 import pl.climbbetter.training.TrainingSessionDetails;
+import pl.climbbetter.training.TrainingSessionSummary;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +26,15 @@ public class TrainingSessionDetailsService {
     ) {
         this.currentUserProvider = currentUserProvider;
         this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TrainingSessionSummary> findByDateRange(LocalDate from, LocalDate to) {
+        if (to.isBefore(from) || ChronoUnit.DAYS.between(from, to) > 366) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Date range must be ordered and no longer than 366 days");
+        }
+        return repository.findByDateRange(currentUserProvider.currentUserId(), from, to);
     }
 
     @Transactional(readOnly = true)

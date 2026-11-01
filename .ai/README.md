@@ -2,7 +2,11 @@
 
 Data: 2026-10-11. Status: iteracja porządkowania **2 z 3 w toku**.
 
+Aktualny przyrost 2026-10-17: React 1–5 jest podłączony do API i sprawdzony, w tym CRUD przez prawdziwy PostgreSQL; oczekuje ocena użytkownika. [Raport i uruchomienie web](documentation/frontend-web.md). Backend ma 52 zielone testy; [kontrakt CRUD](documentation/backend-crud-handoff.md) i [weryfikacja backendu](documentation/backend-verification.md).
+
 To punkt wejścia do wiedzy o projekcie. Opisujemy osobno ustalenia produktu, stan kodu i zamierzenia. Utworzenie dokumentu lub diagramu nie oznacza wdrożenia funkcji.
+
+Ustalenia 2026-10-24: [logowanie Google i profil użytkownika we frontendzie](documentation/frontend-authentication.md) — struktura plików, podział Firebase/API/PostgreSQL i przepływ logowania; plan implementacji.
 
 ## Uzgodniona struktura
 

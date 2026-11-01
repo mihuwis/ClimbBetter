@@ -1,21 +1,31 @@
 # API i przepływ danych
 
-Status: częściowo wdrożony kontrakt Dashboardu; bez gotowego OpenAPI. Aktualizacja: 2026-10-10.
+Status: CRUD sesji, katalog i odczyt kalendarza potwierdzone pełnym zestawem 52 testów backendu, bez failures/errors/skipped. Aktualizacja: 2026-10-17. [Raport weryfikacji](backend-verification.md).
+
+Aktualny kontrakt CRUD i katalogu opisuje [backend-crud-handoff](backend-crud-handoff.md), a wdrożony przepływ React i jego weryfikację [frontend-web](frontend-web.md). Poniższe wcześniejsze zapisy o testach oczekujących zachowują kontekst historyczny i są zastąpione pełnym zielonym wynikiem.
+
+Uzupełnienia dla React: `GET /api/v1/identity/me` zwraca `userId` i `displayName` bieżącej tożsamości. `GET /api/v1/training/sessions?from=YYYY-MM-DD&to=YYYY-MM-DD` zwraca podsumowania widocznych, nieusuniętych sesji włącznie z datami granicznymi, bez limitu 20 Dashboardu. Oba parametry są wymagane; odwrócony zakres lub różnica granic ponad 366 dni daje 400. Szkic i licznik Start now pozostają w przeglądarce; rozpoczęcie nie tworzy zasobu serwera.
 
 ## Stan i odpowiedzialność
 
-W Javie działa `GET /api/v1/dashboard/sessions`. Rozpoczęto kontrakt zapisu przez `CreateTrainingSessionCommand`, lecz brakujący `TrainingEntryCommand`, kontroler, serwis i repozytorium oznaczają, że `POST` jeszcze nie istnieje. Dokładne DTO Details, błędy oraz docelowa paginacja nadal wymagają ustalenia (`OPEN-14`).
+Katalog skalny z 2026-10-17: dodano sektory, filtr `sectorId`, długość w metrach i mapowanie Kurtyki w POST katalogu. Lokalna baza ma publiczne 28 pozycji Filaru Abazego. [Kontrakt i zakres weryfikacji](outdoor-catalog.md).
 
-| Operacja                     | Potrzeba                                               | Status                                      |
-| ---------------------------- | ------------------------------------------------------ | ------------------------------------------- |
-| Odczyt słowników ----------- | skale, profile i reguły potrzebne formularzowi ------- | wymagana ---------------------------------- |
-| Wyszukanie Area/Sector/Climb | filtrowanie po miejscu, historia użycia, stabilne ID   | wymagana; szczegóły dopasowania proponowane |
-| Podgląd obliczeń szkicu ---- | wynik bez tworzenia sesji i draftów katalogu w bazie   | propozycja `OPEN-04` ---------------------- |
-| Utworzenie ukończonej sesji  | atomowy zapis wszystkich wpisów ---------------------- | wymagana ---------------------------------- |
-| Lista sesji ---------------- | dane kart Dashboardu --------------------------------- | pierwszy GET wdrożony i przetestowany ----- |
-| Szczegóły sesji ------------ | grupowanie wspinaczek, uporządkowane próby i snapshoty | wymagana; kształt odczytu `OPEN-06` ------- |
-| Edycja / reewaluacja ------- | korekta historii z audytem --------------------------- | późniejszy przyrost ----------------------- |
-| Calendar / profile / sync -- | dalsze przekroje i integracja mobile ----------------- | późniejsze przyrosty ---------------------- |
+Scenariusze katalogowe uzgodnione 2026-10-17: [A — nowe i znane wspinaczki w sesji; B — zapamiętanie wspinaczek bez sesji](catalog-climb-scenarios.md). Dodano osobny POST Climb i GET pojedynczej pozycji; kompilacja potwierdzona, testy do uruchomienia.
+
+Wcześniej potwierdzono `POST /api/v1/training/sessions`, `GET /api/v1/training/sessions/{sessionId}`, `GET /api/v1/dashboard/sessions` oraz `GET /api/v1/dashboard/personal-bests`. Dodano `PUT` i `DELETE` sesji oraz katalog Area/Climb, wycen i profili pod `/api/v1/catalog`. Dokładne URL, parametry i stan weryfikacji zapisuje handoff. Błędy per pole i docelowa paginacja pozostają dalszym zakresem (`OPEN-14`).
+
+2026-10-17 dodano automatyczne OpenAPI i Swagger UI: `/v3/api-docs` oraz `/swagger-ui.html`. [Uruchomienie i pełne adresy](development.md#swagger-ui-i-openapi). Kompilacja przeszła; interfejs i wygenerowana specyfikacja oczekują na sprawdzenie HTTP po uruchomieniu backendu.
+
+| Operacja                     | Potrzeba                                       | Status                                         |
+| ---------------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| Odczyt słowników             | wyceny i profile formularza                    | kod dodany; testy do uruchomienia              |
+| Wyszukanie Area/Climb        | wybór po UUID, filtrowanie po miejscu i nazwie | kod dodany; testy do uruchomienia              |
+| Podgląd obliczeń szkicu      | wynik bez tworzenia sesji i draftów w bazie    | propozycja OPEN-04                             |
+| Utworzenie ukończonej sesji  | atomowy zapis wszystkich wpisów                | wcześniej przetestowane; regresja do wykonania |
+| Lista sesji i Details        | Dashboard i chronologiczne snapshoty           | wcześniej przetestowane; regresja do wykonania |
+| Edycja i usuwanie sesji      | wersja, przeliczenie edytowanej sesji i audyt  | kod dodany; testy do uruchomienia              |
+| Reewaluacja dalszej historii | osobna jawna operacja                          | późniejszy przyrost                            |
+| Calendar / profile / sync    | dalsze przekroje i integracja mobile           | późniejsze przyrosty                           |
 
 Nie projektujemy endpointu rozpoczynającego sesję dla bieżącego `Record session`.
 
@@ -50,9 +60,9 @@ Przy braku poziomu dotychczasowy model pozwala wyznaczyć go po pierwszej sesji 
 
 Ustalone zachowanie: ponowienie zapisu pod tym samym `clientSessionId` nie tworzy drugiej sesji ani dodatkowych kontaktów w historii. Ukończonego treningu nie zmieniamy ukrytym retry o innej treści; służy do tego jawna edycja. Szkic pozostaje lokalnie do potwierdzenia sukcesu.
 
-Plan techniczny proponuje unikalność `(userId, clientSessionId)`, fingerprint requestu, ten sam wynik dla identycznego ponowienia i `409` dla różnej treści. Szczegóły normalizacji fingerprintu oraz retry uzupełnionego o potwierdzenie konfliktu trzeba opisać w kontrakcie.
+Wdrożona idempotencja używa unikalności `(userId, clientSessionId)` i SHA-256 znormalizowanej komendy. Identyczne ponowienie zwraca istniejące `sessionId`, a inna treść pod tym samym kluczem daje `409 CLIENT_SESSION_ID_CONFLICT`. Współbieżne pierwsze żądania nadal wymagają atomowej obsługi kolizji ograniczenia unikalnego.
 
-Plan błędów: `ProblemDetail`, walidacja per pole/wpis, rozróżnienie braku dostępu/not found, konfliktu wersji i konfliktu historii OS/Flash. Backend zwraca `ASCENT_MODE_HISTORY_CONFLICT`, aby frontend wyświetlił ostrzeżenie. Ponowiony zapis danego wpisu z jawnym potwierdzeniem konfliktu zachowuje deklarację OS/Flash, mnożnik `1.50`, rzeczywistą znajomość i audyt override (DEC-031).
+Konflikt historii OS/Flash zwraca `409 ASCENT_MODE_HISTORY_CONFLICT`, aby frontend wyświetlił ostrzeżenie. Ponowiony zapis danego wpisu z jawnym potwierdzeniem konfliktu zachowuje deklarację OS/Flash, mnożnik `1.50`, rzeczywistą znajomość i audyt override (DEC-031, DEC-039). Pozostały kontrakt błędów nadal używa `ProblemDetail` i wymaga rozwinięcia walidacji per pole/wpis oraz konfliktu wersji edytowanej sesji.
 
 ## Odczyt dla Dashboardu
 
@@ -62,7 +72,11 @@ Kontroler i serializacja mają test MVC, a zapytanie ma test integracyjny z Post
 
 Potrzebne są stabilne ID sesji, nazwa, lokalna data, miejsce, czas i podsumowanie z `adjustedLoad`, `classicLoad` oraz ruchami. `Max grade` dotyczy ukończonych wspinaczek, z rozdzieleniem skal balda i drogi/obwodu; przy samych próbach brak ukończonej wyceny. Nie zwracamy jednej porównanej wyceny z nieporównywalnych skal.
 
-Scenariusz Bronx potwierdził średnią intensywność ocenianych ruchów. Rekordy obejmują maksimum sesji, rekord życiowy, najlepszy wynik z jawnego ostatniego okresu, najwyższe RP, najwyższe OS i Flash oraz różnicę indeksów `RP - OS`, zawsze osobno dla skal. Rekord stopnia zwraca co najmniej etykietę wyceny, datę osiągnięcia i `sessionId`. Długość ostatniego okresu trzeba ustalić przed wystawieniem tego wariantu. Największa liczba ruchów na jednej wspinaczce nie jest rekordem. Dla analizy pracy projektowej ruchy wymagają kontekstu wyceny, profilu, intensywności i loadu; nie dodajemy samodzielnego `maxMovesOnSingleClimb` do DTO.
+Scenariusz Bronx potwierdził średnią intensywność ocenianych ruchów. Personal bests obejmują maksimum sesji, rekord życiowy, najlepszy wynik z ostatnich 12 miesięcy, najwyższe RP, najwyższe OS i Flash oraz różnicę indeksów `RP - OS`, zawsze osobno dla skal. Rekord stopnia zwraca co najmniej etykietę wyceny, datę osiągnięcia i `sessionId`. Największa liczba ruchów na jednej wspinaczce nie jest rekordem. Dla analizy pracy projektowej ruchy wymagają kontekstu wyceny, profilu, intensywności i loadu; nie dodajemy samodzielnego `maxMovesOnSingleClimb` do DTO.
+
+Katalog wyszukuje Area i Climb po nazwie, ale odpowiedzi oraz komendy używają UUID jako tożsamości. Nazwa nie jest kluczem i nie może automatycznie scalać podobnych obiektów.
+
+Edycja historycznej sesji przelicza wyłącznie edytowany agregat i zapisuje audyt. Nie uruchamia automatycznej kaskady przez wszystkie późniejsze sesje. Ich snapshoty pozostają historyczne; przyszła reewaluacja wielu sesji musi być osobną, jawną operacją z podglądem zakresu i skutków.
 
 W kodzie i URL używamy terminu `personal best`, ponieważ techniczne `record` jest wieloznaczne. Endpoint wyników życiowych to `GET /api/v1/dashboard/personal-bests`; odpowiedź rozdziela `boulder` i `route`, a w każdej skali zawiera `overall`, `os`, `flash`, `rp` i `rpVsOsGap`. Brak osiągnięcia w danej kategorii ma wartość `null`.
 
@@ -70,11 +84,13 @@ Pierwszy read model Dashboardu dostarcza tekstowe metryki z prawdziwych danych i
 
 ## Odczyt dla Details
 
-Odpowiedź musi zachować wszystkie wpisy, `entryOrder`, stabilną tożsamość wspinaczki i snapshot każdego wyniku. Grupowanie po samej nazwie jest niedopuszczalne. Powrót do tej samej drogi po innej musi być możliwy do odtworzenia chronologicznie.
+Wdrożony `GET /api/v1/training/sessions/{sessionId}` zwraca nagłówek i podsumowanie sesji oraz płaską listę wpisów uporządkowaną po `entryOrder`. Każdy oceniany wpis zachowuje stabilne `climbId`, snapshot nazwy, wyceny i profilu, ruchy, obliczenia oraz kontekst historii. WARMUP ma dane nieoceniane jako `null` i zerowe loady. Brak sesji i sesja innego użytkownika zwracają to samo `404`.
+
+Frontend grupuje listę po `climbId`, zachowując `entryOrder` do pokazania chronologii. Grupowanie po samej nazwie jest niedopuszczalne. Powrót do tej samej drogi po innej musi być możliwy do odtworzenia bez równoległej, zduplikowanej struktury grup w odpowiedzi API.
 
 Próba prezentuje rezultat, tryb, ruchy, Classic Load, Adjusted Load oraz rozwijane EDL, intensywność, poziom i mnożniki. Różnych historycznych wycen/profili nie zastępujemy jedną aktualną wartością w nagłówku grupy. Opis drogi i notatka próby są odrębne; miniatura jest opcjonalna, a upload zdjęć poza automatycznym zakresem etapu.
 
-Otwarte: czy API zwraca grupy z agregatami, czy tylko dane do grupowania w webie, jak oznaczyć aktualne dane katalogu i jakie dokładnie pola snapshotu wykorzystać (`OPEN-06`).
+Otwarte pozostają opcjonalne opisy i media katalogowe oraz sposób oznaczenia różnicy między aktualnymi danymi katalogu a historycznym snapshotem (`OPEN-06`).
 
 ## Scenariusze akceptacyjne kontraktu
 

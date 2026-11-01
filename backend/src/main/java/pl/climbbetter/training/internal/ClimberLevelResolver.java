@@ -48,6 +48,7 @@ class ClimberLevelResolver {
                             JOIN training.training_sessions session
                               ON session.id = entry.session_id
                             WHERE session.user_id = :userId
+                              AND session.deleted_at IS NULL
                               AND session.session_date >= :historyStartDate
                               AND session.session_date <= :sessionDate
                               AND entry.grade_scale_code = :scaleCode

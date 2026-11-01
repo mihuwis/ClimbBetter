@@ -20,9 +20,11 @@ npm run lint
 npm run build
 ```
 
-Skryptu `npm test` jeszcze nie ma. Projekt używa mocków i nie wymaga działającego API do samego prototypu UI. `VITE_API_URL` jest planem integracji, nie istniejącą konfiguracją. Zgodność lokalnego Node z wymaganiami zależności trzeba sprawdzić przed uruchomieniem; bieżącej instalacji nie odczytywano.
+Web korzysta z prawdziwego API i wymaga uruchomionego backendu. Vite działa na http://localhost:5173 i przekazuje `/api` do `127.0.0.1:8080`. `CB_API_PROXY_TARGET` może zmienić cel proxy; `VITE_API_URL` ustawia bezpośredni adres API i zwykle nie jest potrzebne. Zajęty 5173 kończy uruchomienie błędem zamiast zmieniać port. Zweryfikowano Node 22.19.0 i npm 11.6.2. Dostępne są `npm test` (model/szkic) i `npm run test:e2e` (headless Edge, domyślnie kontrolowane odpowiedzi HTTP). [Pełny opis i test rzeczywistej bazy](frontend-web.md).
 
 ## Java
+
+Ostatnia pełna weryfikacja: 2026-10-17, Maven `test`, **51 testów, 0 failures/errors/skipped, BUILD SUCCESS**. [Zakres i raport](backend-verification.md).
 
 Projekt deklaruje Java 21; wrapper pobiera Maven zgodnie z `backend/.mvn/wrapper/maven-wrapper.properties`. W katalogu `backend`:
 
@@ -35,6 +37,22 @@ Test kontekstu korzysta z Testcontainers PostgreSQL i wymaga wcześniej uruchomi
 Testcontainers nadal nie wymaga Compose: tworzy tymczasowy kontener, a `@ServiceConnection` przekazuje połączenie do Spring Boot, Flyway i JPA. Dane testowe znikają wraz z kontenerem. Trwałe środowisko local jest osobnym serwisem z [infra/compose.yml](../../infra/compose.yml) i nazwanym wolumenem.
 
 Pełne `./mvnw test` z 2026-10-10 wykonało 13 testów bez failures, errors i skipped. Obejmuje to test integracyjny PostgreSQL dla `DashboardQuery` oraz dwa testy kontraktu kontrolera.
+
+## Swagger UI i OpenAPI
+
+Aktualizacja 2026-10-17: dodano `springdoc-openapi-starter-webmvc-ui` w wersji `3.1.1`, zgodnie z [instrukcją springdoc](https://springdoc.org/getting-started.html). Kompilacja aplikacji i testów przeszła; odpowiedzi HTTP dokumentacji czekają na sprawdzenie po uruchomieniu backendu.
+
+W Bash, w katalogu `backend`, przy działającej lokalnej bazie PostgreSQL:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+- Swagger UI: <http://localhost:8080/swagger-ui.html> (przekierowuje do interfejsu).
+- Specyfikacja OpenAPI JSON: <http://localhost:8080/v3/api-docs>.
+- Specyfikacja OpenAPI YAML: <http://localhost:8080/v3/api-docs.yaml>.
+
+Dokumentacja obejmuje `/api/v1/**` i generuje modele z kontrolerów oraz DTO. Przyciski `Try it out` i `Execute` wysyłają rzeczywiste żądania do uruchomionego backendu, w profilu local korzystającego z trwałej bazy. Po dodaniu zależności trzeba ponownie uruchomić backend.
 
 ## Lokalny PostgreSQL
 
@@ -55,7 +73,32 @@ Uruchomienie z katalogu `backend` nie wymaga ręcznego ustawiania zmiennych:
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-Uruchomienie z 2026-10-11 połączyło się z PostgreSQL 17.6, zastosowało migracje do `V6` i wystartowało na porcie 8080. DBeaver potwierdził tabelę `catalog.grades` wraz z danymi obu skal. Wcześniejsze ręczne `curl http://localhost:8080/api/v1/dashboard/sessions` zwróciło `[]`. Swagger UI nadal nie jest skonfigurowany.
+Uruchomienie z 2026-10-11 połączyło się z PostgreSQL 17.6, zastosowało migracje do `V6` i wystartowało na porcie 8080. DBeaver potwierdził tabelę `catalog.grades` wraz z danymi obu skal. Wcześniejsze ręczne `curl http://localhost:8080/api/v1/dashboard/sessions` zwróciło `[]`. Swagger UI dodano 2026-10-17; adresy podano powyżej.
+
+## Lokalne dane przykładowe i wybór użytkownika
+
+Przykładowa historia Mihu obejmuje też 14 sesji od 1 września do 15 października 2026, po dwie tygodniowo. Zapisano je przez serwisy aplikacji, a GET Dashboardu potwierdził ich odczyt. [Raport i założenia danych DEMO](mihu-demo-history.md).
+
+2026-10-17 bezpośrednio do trwałej bazy Compose dodano dane ze skryptu [local-sample-catalog.sql](../../infra/sql/local-sample-catalog.sql). Nie jest on migracją Flyway ani danymi środowiska produkcyjnego. Stałe UUID i `ON CONFLICT (id) DO NOTHING` pozwalają ponowić skrypt bez duplikatów i bez nadpisywania zmian użytkownika.
+
+Konto `Mihu` ma UUID `00000000-0000-0000-0000-000000000002`; istniejący `Local Developer` zachowuje UUID kończące się `0001`. Publiczne Area `Bronx` należy do Mihu i ma typ `ARTIFICIAL`/`BOULDER_GYM`, zgodnie z potwierdzeniem użytkownika z 2026-10-17. Area `Garaż` jest prywatne, typu `ARTIFICIAL`/`HOME_WALL`.
+
+Wszystkie sześć Climb jest prywatnych i należy do Mihu:
+
+- Bronx: `Zielona po glizdach` (`5`), `Zielona kule` (`5+`), `niebieska w rogu` (`6A`); `BOULDER_FONT`, typ/profil `BOULDER`, proponowane 8 ruchów zgodnie z domyślną wartością DEC-027.
+- Garaż: `zielony bazowy` (`6a`), `fiolet bazowy` (`6b`), `pomarańcz bazowy` (`6c`); `ROUTE_FRENCH`, typ/profil `CIRCUIT`, 38 ruchów każdy.
+
+Transakcja SQL została zatwierdzona. Zapytania odpowiadające filtrom katalogu potwierdziły: Local Developer widzi 1 Area i 0 Climb, a Mihu 2 Area i 6 Climb. Nie potwierdzono jeszcze tych danych przez HTTP. Nie dodano sesji treningowych.
+
+Później 2026-10-17 rozszerzono ten sam skrypt o 10 prywatnych baldów Mihu na Bronxie: `niebieski01`–`niebieski05` i `Pomarańczowy01`–`Pomarańczowy05`, o wycenach 6A/6A+/6B i sugestii 8 ruchów. Zapis w trwałej bazie potwierdzono przez COMMIT i odczyt SQL: Bronx zawiera teraz 13 prywatnych baldów Mihu. Publiczny katalog Doliny Bolechowickiej dodano osobno, zgodnie z [opisem importu](outdoor-catalog.md).
+
+Profil `local` pozwala wybrać tożsamość przez `CB_LOCAL_USER_ID`, domyślnie pozostawiając Local Developer. Po zatrzymaniu wcześniej uruchomionego backendu, w Bash z katalogu `backend`, uruchomienie jako Mihu wygląda tak:
+
+```bash
+CB_LOCAL_USER_ID=00000000-0000-0000-0000-000000000002 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Zwykłe polecenie bez tej zmiennej nadal wybiera Local Developer, o ile zmienna nie została wcześniej wyeksportowana w terminalu. To wybór jednej tożsamości dla całego procesu deweloperskiego, nie logowanie ani przełączanie kont z przeglądarki. Reguły widoczności filtrują po UUID aktywnego użytkownika; publiczne Area nie odsłania cudzych prywatnych Climb. Testowy profil domyślnie pozostaje przy Local Developer, a dane przykładowe nie są ładowane do Testcontainers.
 
 ## Flutter
 

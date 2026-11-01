@@ -63,6 +63,6 @@ Backend wylicza wyniki z faktów użytkownika, słowników, historii i poziomu o
 
 Poziom wspierany piramidą, najwyższa ukończona wycena, profil OS/Flash/Fast RP/RP i confidence są różnymi informacjami. Confidence objaśnia siłę dowodów; nie jest dodatkową wagą loadu.
 
-Snapshot chroni historię przed późniejszą zmianą nazwy, wyceny, poziomu lub konfiguracji. Katalog archiwizujemy, nie usuwamy kaskadowo z treningami. Edycja dawnych sesji jest dozwolona produktowo; zmiana wpływająca na wynik i masowa reewaluacja muszą zachować poprzedni i nowy snapshot, autora, czas i powód. Nie uruchamiamy reewaluacji automatycznie przy zmianie słownika.
+Snapshot chroni historię przed późniejszą zmianą nazwy, wyceny, poziomu lub konfiguracji. Katalog archiwizujemy, nie usuwamy kaskadowo z treningami. Edycja dawnej sesji przelicza edytowany agregat i zachowuje poprzedni oraz nowy snapshot, autora, czas i powód. Nie przelicza automatycznie wszystkich późniejszych sesji: ich snapshoty pozostają zapisem wiedzy i reguł użytych w chwili zapisu. Masowa reewaluacja będzie osobną, jawną operacją z podglądem zakresu. Nie uruchamiamy jej automatycznie przy edycji ani zmianie słownika.
 
 Schemat i pełniejsze pola: [database](../documentation/database.md). Rejestr decyzji `DEC-001`–`DEC-018`: [decisions](../documentation/decisions.md). Źródło zachowane w całości: [CB_model](../archive/source-snapshot/docs/CB_model.md); zasadę jednej sesji w jednym Area potwierdził użytkownik 2026-10-03.

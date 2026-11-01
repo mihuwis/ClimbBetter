@@ -37,6 +37,7 @@ class ClimbHistoryResolver {
                         JOIN training.training_sessions session
                           ON session.id = entry.session_id
                         WHERE session.user_id = :userId
+                          AND session.deleted_at IS NULL
                           AND entry.climb_id = :climbId
                           AND session.session_date <= :sessionDate
                           AND entry.result_type IN ('ASCENT', 'ATTEMPT')

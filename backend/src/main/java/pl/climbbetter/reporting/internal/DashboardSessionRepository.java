@@ -32,6 +32,7 @@ class DashboardSessionRepository {
                             max_route_grade
                         FROM training.training_sessions
                         WHERE user_id = :userId
+                          AND deleted_at IS NULL
                         ORDER BY session_date DESC, created_at DESC
                         LIMIT 20
                         """)
@@ -92,6 +93,7 @@ class DashboardSessionRepository {
                             JOIN training.training_sessions session
                               ON session.id = entry.session_id
                             WHERE session.user_id = :userId
+                              AND session.deleted_at IS NULL
                               AND entry.result_type = 'ASCENT'
                         )
                         SELECT

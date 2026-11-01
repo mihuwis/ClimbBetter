@@ -4,7 +4,7 @@ Aplikacja do rejestrowania treningów wspinaczkowych, analizy obciążenia i pos
 
 ## Stan projektu
 
-Backend Java ma szkielet Spring Boot, konfigurację i testy podstawowe; logika treningowa i jej API pozostają do odtworzenia. Web React i mobile Flutter są prototypami na danych przykładowych. Bieżący priorytet to Java i pierwszy rzeczywisty przepływ web: Record session → zapis → Dashboard → szczegóły treningu.
+Backend Java obsługuje CRUD sesji, obliczenia, audyt i katalog wspinaczek w PostgreSQL. React korzysta z API: Dashboard, szczegóły z edycją/usuwaniem, kalendarz, dodanie ukończonej sesji i Start now z trwałym lokalnym szkicem. Ten zakres przeszedł testy i oczekuje oceny użytkownika. Flutter pozostaje prototypem. [Raport i uruchomienie React](.ai/documentation/frontend-web.md).
 
 ## Struktura
 

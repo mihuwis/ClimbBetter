@@ -1,6 +1,8 @@
 package pl.climbbetter;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -491,5 +493,172 @@ void rejectsChangedRequestWithExistingClientSessionId()
             "Original retry session",
             storedSessionName
     );
+}
+
+@ParameterizedTest(name = "{0} requires confirmation and preserves multiplier 1.50")
+@ValueSource(strings = {"OS", "FLASH"})
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
+void requiresConfirmationForAscentModeConflictingWithHistory(String ascentMode)
+        throws Exception {
+    UUID clientSessionId = UUID.randomUUID();
+    UUID clientAreaId = UUID.randomUUID();
+    UUID clientClimbId = UUID.randomUUID();
+    UUID firstEntryId = UUID.randomUUID();
+    UUID conflictingEntryId = UUID.randomUUID();
+
+    String requestWithoutConfirmation = """
+            {
+              "clientSessionId":
+                "%s",
+              "sessionName": "History conflict session",
+              "sessionDate": "2020-01-01",
+              "timeZoneId": "Europe/Warsaw",
+              "startedAt": "2020-01-01T08:00:00Z",
+              "endedAt": "2020-01-01T09:00:00Z",
+              "clientAreaId":
+                "%s",
+              "areaName": "History Conflict Gym",
+              "entries": [
+                {
+                  "clientEntryId":
+                    "%s",
+                  "entryOrder": 0,
+                  "resultType": "ASCENT",
+                  "clientClimbId":
+                    "%s",
+                  "climbName": "History Boulder",
+                  "climbType": "BOULDER",
+                  "gradeLabel": "4",
+                  "effortProfileCode": "BOULDER",
+                  "ascentMode": "RP",
+                  "totalMoves": 8,
+                  "executedMoves": 8
+                },
+                {
+                  "clientEntryId":
+                    "%s",
+                  "entryOrder": 1,
+                  "resultType": "ASCENT",
+                  "clientClimbId":
+                    "%s",
+                  "climbName": "History Boulder",
+                  "climbType": "BOULDER",
+                  "gradeLabel": "4",
+                  "effortProfileCode": "BOULDER",
+                  "ascentMode": "%s",
+                  "totalMoves": 8,
+                  "executedMoves": 8,
+                  "historyConflictConfirmed": false
+                }
+              ]
+            }
+            """.formatted(
+                    clientSessionId,
+                    clientAreaId,
+                    firstEntryId,
+                    clientClimbId,
+                    conflictingEntryId,
+                    clientClimbId,
+                    ascentMode
+            );
+
+    try {
+        mockMvc.perform(post("/api/v1/training/sessions")
+                        .contentType("application/json")
+                        .content(requestWithoutConfirmation))
+                .andExpect(status().isConflict())
+                .andExpect(
+                        jsonPath("$.code")
+                                .value("ASCENT_MODE_HISTORY_CONFLICT")
+                )
+                .andExpect(
+                        jsonPath("$.clientEntryId")
+                                .value(conflictingEntryId.toString())
+                )
+                .andExpect(jsonPath("$.ascentMode").value(ascentMode))
+                .andExpect(
+                        jsonPath("$.confirmationRequired").value(true)
+                );
+
+        Long sessionsAfterConflict = jdbcClient.sql("""
+                        SELECT COUNT(*)
+                        FROM training.training_sessions
+                        WHERE client_session_id = :clientSessionId
+                        """)
+                .param("clientSessionId", clientSessionId)
+                .query(Long.class)
+                .single();
+
+        assertEquals(0L, sessionsAfterConflict);
+
+        String confirmedRequest = requestWithoutConfirmation.replace(
+                "\"historyConflictConfirmed\": false",
+                "\"historyConflictConfirmed\": true"
+        );
+
+        mockMvc.perform(post("/api/v1/training/sessions")
+                        .contentType("application/json")
+                        .content(confirmedRequest))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.sessionId").isNotEmpty());
+
+        Long confirmedConflictCount = jdbcClient.sql("""
+                        SELECT COUNT(*)
+                        FROM training.training_entries entry
+                        JOIN training.training_sessions session
+                          ON session.id = entry.session_id
+                        WHERE session.client_session_id = :clientSessionId
+                          AND entry.client_entry_id = :clientEntryId
+                          AND entry.history_conflict_detected = true
+                          AND entry.history_conflict_confirmed = true
+                          AND entry.style_multiplier = 1.50
+                        """)
+                .param("clientSessionId", clientSessionId)
+                .param("clientEntryId", conflictingEntryId)
+                .query(Long.class)
+                .single();
+
+        assertEquals(
+                1L,
+                confirmedConflictCount,
+                "Confirmed " + ascentMode + " must retain audit flags and multiplier 1.50"
+        );
+    } finally {
+        deleteHistoryConflictScenario(clientSessionId, clientClimbId, clientAreaId);
+    }
+}
+
+private void deleteHistoryConflictScenario(
+        UUID clientSessionId,
+        UUID clientClimbId,
+        UUID clientAreaId
+) {
+    jdbcClient.sql("""
+                    DELETE FROM training.training_entries
+                    WHERE session_id IN (
+                        SELECT id FROM training.training_sessions
+                        WHERE client_session_id = :clientSessionId
+                    )
+                    """)
+            .param("clientSessionId", clientSessionId)
+            .update();
+    jdbcClient.sql("""
+                    DELETE FROM training.training_sessions
+                    WHERE client_session_id = :clientSessionId
+                    """)
+            .param("clientSessionId", clientSessionId)
+            .update();
+    jdbcClient.sql("""
+                    DELETE FROM catalog.climbs
+                    WHERE client_climb_id = :clientClimbId
+                    """)
+            .param("clientClimbId", clientClimbId)
+            .update();
+    jdbcClient.sql("""
+                    DELETE FROM catalog.areas
+                    WHERE client_area_id = :clientAreaId
+                    """)
+            .param("clientAreaId", clientAreaId)
+            .update();
 }
 }

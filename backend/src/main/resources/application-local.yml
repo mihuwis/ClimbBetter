@@ -8,3 +8,7 @@ spring:
     locations:
       - classpath:db/migration
       - classpath:db/local-migration
+
+climbbetter:
+  local:
+    user-id: ${CB_LOCAL_USER_ID:00000000-0000-0000-0000-000000000001}

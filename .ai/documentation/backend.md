@@ -4,6 +4,8 @@ Status: pierwszy pion zapisu i odczytu sesji działa z PostgreSQL; `POST /api/v1
 
 ## Stan potwierdzony w repozytorium
 
+Weryfikacja 2026-10-17: pełne Maven `test` zakończyło się wynikiem 51/51, bez failures/errors/skipped. Potwierdzono podstawowy CRUD sesji, katalog, rollback, dostęp, scenariusze A/B i migracje do V15. [Raport](backend-verification.md). Ten wynik zastępuje wcześniejsze adnotacje o nieuruchomionych testach; kolejnym zakresem jest React.
+
 | Element             | Dowód                                                                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Maven i Spring Boot | [pom.xml](../../backend/pom.xml): Java 21, Spring Boot 4.1.0, BOM Modulith 2.1.0 --------------------------------------------------------- |
@@ -21,7 +23,7 @@ PostgreSQL testowy tworzy programowo `TestcontainersConfiguration`, a `@ServiceC
 
 Moduł `training` zawiera obecnie klasyfikację wpisu, rozdzielone tryby przejścia i asekuracji, `MoveCount`, osobny `WarmUpEntry`, kalkulatory EDL, intensywności i obu loadów oraz agregację `EntryContribution` do `SessionMetrics`. `TrainingMetricsFacade` stanowi jedno wejście do tych obliczeń i nie wystawia serwisowi zapisu wszystkich pomocniczych typów modelu. Potwierdzone reguły obejmują `executedMoves > totalMoves`, rozgrzewkę wnoszącą ruchy i zerowy load oraz sumowanie wpisów ocenianych z rozgrzewką.
 
-Wcześniejszy pełny `./mvnw test` z 2026-10-10 wykonał 13 testów dla pierwszego pionu Dashboardu. Po dodaniu kolejnych testów domenowych użytkownik ponownie potwierdził sukces pełnego zestawu, ale bez przekazania końcowej liczby. Po migracji `V5` celowany `DashboardQueryIntegrationTest` uruchomił PostgreSQL 17.6 przez Testcontainers i przeszedł po dostosowaniu oczekiwanej skali loadów do czterech miejsc. Dnia 2026-10-11 testy integracyjne zastosowały migracje do `V12`. `TrainingSessionFlowIntegrationTest` zakończył się sukcesem po rzeczywistym żądaniu `POST`, zapisie sesji i trzech wpisów w PostgreSQL oraz odczycie wyniku przez endpoint Dashboardu. Ten sam test potwierdził później rollback całej transakcji, identyczne ponowienie bez duplikatu oraz konflikt `409` przy ponownym użyciu `clientSessionId` dla zmienionej treści.
+Wcześniejszy pełny `./mvnw test` z 2026-10-10 wykonał 13 testów dla pierwszego pionu Dashboardu. Po dodaniu kolejnych testów domenowych użytkownik ponownie potwierdził sukces pełnego zestawu, ale bez przekazania końcowej liczby. Po migracji `V5` celowany `DashboardQueryIntegrationTest` uruchomił PostgreSQL 17.6 przez Testcontainers i przeszedł po dostosowaniu oczekiwanej skali loadów do czterech miejsc. Dnia 2026-10-11 testy integracyjne zastosowały migracje do `V12`. `TrainingSessionFlowIntegrationTest` zakończył się sukcesem po rzeczywistym żądaniu `POST`, zapisie sesji i trzech wpisów w PostgreSQL oraz odczycie wyniku przez endpointy Dashboardu i Details. Ten sam test potwierdził później rollback całej transakcji, identyczne ponowienie bez duplikatu, konflikt `409` przy ponownym użyciu `clientSessionId` dla zmienionej treści, personal bests oraz `404` dla nieznanej sesji.
 
 ## Potwierdzony pion Dashboardu
 
@@ -39,9 +41,17 @@ Uruchomienie z profilem `local` połączyło aplikację z trwałym PostgreSQL, z
 
 Na granicy JDBC `Instant` jest konwertowany do `OffsetDateTime` w UTC, ponieważ sterownik PostgreSQL nie wyprowadza sam typu SQL dla `Instant`. Test wykrył ten problem przy tworzeniu prywatnego Area; poprawka obejmuje Area, Climb, sesję i wpisy.
 
+## Szczegóły sesji
+
+`GET /api/v1/training/sessions/{sessionId}` przechodzi przez `TrainingSessionDetailsService` i istniejące repozytorium JDBC. Odpowiedź zawiera podsumowanie oraz płaskie wpisy posortowane po `entryOrder`. `TrainingSessionDetails` grupuje w jednym pliku dane wpisu, obliczenia i kontekst historii jako rekordy zagnieżdżone. Zapytania zawsze filtrują po `sessionId` i bieżącym `userId`; brak i cudzy rekord są nierozróżnialnym `404`.
+
 ## Czego jeszcze nie ma w Javie
 
-Nadal nie ma Details ani OpenAPI/springdoc. Brakuje testów konfliktu OS/Flash oraz sesji zawierającej wyłącznie próby. Personal bests nie mają jeszcze wariantu ostatniego okresu, którego długość pozostaje do ustalenia, a frontend nadal korzysta z mocków. Zwykłe ponowienie jest chronione fingerprintem, lecz równoczesne pierwsze żądania mogą nadal spotkać się na ograniczeniu unikalnym; docelowo zapis powinien obsłużyć tę kolizję przez atomowy insert albo bezpieczny ponowny odczyt.
+Aktualizacja 2026-10-17: kod zawiera edycję i usuwanie sesji, audyt, katalog Area/Climb, słowniki wycen/profili oraz lokalny CORS dla Vite. Aplikacja i testy kompilują się; testy nowego przyrostu pozostają do uruchomienia. Szczegóły, granice kontraktu i polecenie weryfikacji: [backend-crud-handoff](backend-crud-handoff.md).
+
+Swagger UI i OpenAPI dodano 2026-10-17 przez springdoc `3.1.1`; kompilacja przeszła, sprawdzenie HTTP pozostaje do wykonania. [Adresy i uruchomienie](development.md#swagger-ui-i-openapi).
+
+Nadal nie ma recent personal bests ani integracji React z API. Okno recent bests ustalono na 12 miesięcy (DEC-036). Brakuje potwierdzenia scenariusza wyłącznie z próbami i ochrony równoczesnych pierwszych retry. Te rozszerzenia nie blokują przejścia do React po potwierdzeniu podstawowego CRUD.
 
 Stary `CB_Backend.md` jednocześnie nazywał katalog pustym i odhaczał bootstrap. Bieżący opis opiera się na kodzie; dawne checklisty pozostają w archiwum.
 

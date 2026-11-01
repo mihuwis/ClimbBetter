@@ -1,20 +1,24 @@
 package pl.climbbetter.training;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 public record CreateTrainingSessionCommand(
-        UUID clientSessionId,
+        @NotNull UUID clientSessionId,
         String sessionName,
-        LocalDate sessionDate,
-        String timeZoneId,
-        Instant startedAt,
-        Instant endedAt,
+        @NotNull LocalDate sessionDate,
+        @NotBlank String timeZoneId,
+        @NotNull Instant startedAt,
+        @NotNull Instant endedAt,
         UUID areaId,
         UUID clientAreaId,
         String areaName,
-        List<TrainingEntryCommand> entries
+        @NotEmpty List<@NotNull @Valid TrainingEntryCommand> entries
 ) {
 }

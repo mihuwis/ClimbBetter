@@ -127,7 +127,7 @@ Najbliższy pion zapisu ma obsłużyć bez zbędnych pytań następującą sesj�
 
 Podstawowe podsumowanie pokazuje sumę wykonanych ruchów, `classicLoad`, `adjustedLoad` i średnią intensywność ocenianych ruchów. Najwyższa ukończona wycena w sesji opisuje szczyt trudności danego treningu. Porównanie z całą historią daje rekord życiowy, a porównanie z jawnym ostatnim okresem opisuje aktualną formę; długość tego okresu trzeba ustalić w kontrakcie.
 
-Profil wyników obejmuje najwyższe RP, OS i Flash oraz różnicę indeksów `RP - OS`, osobno dla balda i drogi. Rekord przechowuje etykietę wyceny, datę osiągnięcia i `sessionId`, aby można było otworzyć źródłowy trening. Sama największa liczba ruchów na jednej wspinaczce nie jest rekordem, ponieważ premiowałaby jej długość lub powtórzenia. Ruchy, profil wysiłku, intensywność i load opisują różne cechy pracy i należy analizować je razem. Nie wolno mieszać skal ani przedstawiać nieukończonej próby jako rekordu przejścia.
+Profil wyników obejmuje najwyższe RP, OS i Flash oraz różnicę indeksów `RP - OS`, osobno dla balda i drogi. Rekord przechowuje etykietę wyceny, datę osiągnięcia i `sessionId`, aby można było otworzyć źródłowy trening. Recent personal best używa ruchomego okna ostatnich 12 miesięcy i nie zastępuje rekordu życiowego. Sama największa liczba ruchów na jednej wspinaczce nie jest rekordem, ponieważ premiowałaby jej długość lub powtórzenia. Ruchy, profil wysiłku, intensywność i load opisują różne cechy pracy i należy analizować je razem. Nie wolno mieszać skal ani przedstawiać nieukończonej próby jako rekordu przejścia.
 
 Propozycje angielskich etykiet, niezależne od istniejących kodów profili:
 

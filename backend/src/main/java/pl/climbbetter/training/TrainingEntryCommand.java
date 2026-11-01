@@ -1,11 +1,15 @@
 package pl.climbbetter.training;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.UUID;
 
 public record TrainingEntryCommand(
-        UUID clientEntryId,
-        int entryOrder,
-        String resultType,
+        @NotNull UUID clientEntryId,
+        @PositiveOrZero int entryOrder,
+        @NotBlank String resultType,
         UUID climbId,
         UUID clientClimbId,
         String climbName,
@@ -14,8 +18,8 @@ public record TrainingEntryCommand(
         String effortProfileCode,
         String ascentMode,
         String protectionMode,
-        Integer totalMoves,
-        int executedMoves,
+        @Positive Integer totalMoves,
+        @Positive int executedMoves,
         String notes,
         Boolean historyConflictConfirmed
 ) {

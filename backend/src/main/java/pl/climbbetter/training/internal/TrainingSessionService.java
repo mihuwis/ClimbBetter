@@ -1,10 +1,15 @@
 package pl.climbbetter.training.internal;
 
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import pl.climbbetter.identity.CurrentUserProvider;
 import pl.climbbetter.training.CreateTrainingSessionCommand;
 import pl.climbbetter.training.TrainingEntryCommand;
+import pl.climbbetter.training.TrainingSessionDetails;
+import pl.climbbetter.training.UpdateTrainingSessionCommand;
+import tools.jackson.databind.ObjectMapper;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedEntry;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedSession;
@@ -40,6 +45,7 @@ public class TrainingSessionService {
     private final TrainingMetricsFacade trainingMetricsFacade;
     private final TrainingSessionFingerprint fingerprint;
     private final TrainingSessionRepository repository;
+    private final ObjectMapper objectMapper;
 
     TrainingSessionService(
             CurrentUserProvider currentUserProvider,
@@ -53,7 +59,8 @@ public class TrainingSessionService {
             CalculationRuleResolver calculationRuleResolver,
             TrainingMetricsFacade trainingMetricsFacade,
             TrainingSessionFingerprint fingerprint,
-            TrainingSessionRepository repository
+            TrainingSessionRepository repository,
+            ObjectMapper objectMapper
     ) {
         this.currentUserProvider = currentUserProvider;
         this.clock = clock;
@@ -67,6 +74,7 @@ public class TrainingSessionService {
         this.trainingMetricsFacade = trainingMetricsFacade;
         this.fingerprint = fingerprint;
         this.repository = repository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -84,6 +92,11 @@ public class TrainingSessionService {
                 .orElse(null);
 
         if (existingSession != null) {
+            if (existingSession.deleted()) {
+                throw new TrainingSessionConflictException(
+                        "Client session ID belongs to a deleted session"
+                );
+            }
             if (requestFingerprint.equals(
                     existingSession.requestFingerprint()
             )) {
@@ -151,6 +164,141 @@ public class TrainingSessionService {
                 )
         );
 
+        calculateAndSaveEntries(
+                sessionId,
+                userId,
+                command,
+                area,
+                orderedEntries,
+                grades,
+                levels,
+                createdAt
+        );
+
+        return sessionId;
+    }
+
+    @Transactional
+    public TrainingSessionDetails update(
+            UUID sessionId,
+            UpdateTrainingSessionCommand updateCommand
+    ) {
+        if (updateCommand == null || updateCommand.session() == null) {
+            throw new IllegalArgumentException("Session is required");
+        }
+        if (updateCommand.expectedVersion() == null || updateCommand.expectedVersion() < 0) {
+            throw new IllegalArgumentException("Expected version cannot be negative");
+        }
+        if (updateCommand.changeReason() == null
+                || updateCommand.changeReason().isBlank()) {
+            throw new IllegalArgumentException("Change reason is required");
+        }
+
+        CreateTrainingSessionCommand command = updateCommand.session();
+        validateCommand(command);
+        UUID userId = currentUserProvider.currentUserId();
+        TrainingSessionDetails before = readDetails(userId, sessionId);
+
+        if (!before.clientSessionId().equals(command.clientSessionId())) {
+            throw new IllegalArgumentException("Client session ID cannot be changed");
+        }
+        if (before.version() != updateCommand.expectedVersion().longValue()
+                || !repository.advanceVersion(
+                userId, sessionId, updateCommand.expectedVersion())) {
+            throw new TrainingSessionVersionConflictException();
+        }
+
+        // Remove the old entries before resolving history and climber level.
+        repository.deleteEntries(userId, sessionId);
+        List<TrainingEntryCommand> orderedEntries = command.entries().stream()
+                .sorted(Comparator.comparingInt(TrainingEntryCommand::entryOrder))
+                .toList();
+        Map<Integer, GradeResolver.ResolvedGrade> grades = resolveGrades(orderedEntries);
+        Map<String, ClimberLevelResolver.ResolvedLevel> levels = resolveLevels(
+                userId, command.sessionDate(), orderedEntries, grades
+        );
+        AreaResolver.ResolvedArea area = areaResolver.resolve(
+                userId, command.areaId(), command.clientAreaId(), command.areaName()
+        );
+        Instant changedAt = clock.instant();
+        repository.updateSessionHeader(new TrainingSessionRepository.SessionRow(
+                sessionId,
+                command.clientSessionId(),
+                fingerprint.calculate(command),
+                userId,
+                area.id(),
+                resolveSessionName(command, area),
+                command.sessionDate(),
+                command.timeZoneId(),
+                calculateDurationMinutes(command.startedAt(), command.endedAt()),
+                command.startedAt(),
+                command.endedAt(),
+                area.name(),
+                0,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                null,
+                null,
+                null,
+                changedAt
+        ));
+        calculateAndSaveEntries(
+                sessionId, userId, command, area, orderedEntries, grades, levels, changedAt
+        );
+
+        TrainingSessionDetails after = readDetails(userId, sessionId);
+        repository.insertRevision(
+                userId,
+                sessionId,
+                after.version(),
+                updateCommand.changeReason().trim(),
+                objectMapper.writeValueAsString(before),
+                objectMapper.writeValueAsString(after),
+                changedAt
+        );
+        return after;
+    }
+
+    @Transactional
+    public void delete(UUID sessionId, long expectedVersion) {
+        UUID userId = currentUserProvider.currentUserId();
+        TrainingSessionDetails before = readDetails(userId, sessionId);
+        if (before.version() != expectedVersion
+                || !repository.advanceVersion(userId, sessionId, expectedVersion)) {
+            throw new TrainingSessionVersionConflictException();
+        }
+        Instant deletedAt = clock.instant();
+        repository.markDeleted(userId, sessionId, deletedAt);
+        repository.insertRevision(
+                userId, sessionId, expectedVersion + 1, "Session deleted",
+                objectMapper.writeValueAsString(before),
+                objectMapper.writeValueAsString(Map.of(
+                        "deleted", true,
+                        "version", expectedVersion + 1,
+                        "deletedAt", deletedAt
+                )),
+                deletedAt
+        );
+    }
+
+    private TrainingSessionDetails readDetails(UUID userId, UUID sessionId) {
+        return repository.findDetailsSession(userId, sessionId)
+                .map(session -> session.toDetails(
+                        repository.findDetailsEntries(userId, sessionId)
+                ))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private void calculateAndSaveEntries(
+            UUID sessionId,
+            UUID userId,
+            CreateTrainingSessionCommand command,
+            AreaResolver.ResolvedArea area,
+            List<TrainingEntryCommand> orderedEntries,
+            Map<Integer, GradeResolver.ResolvedGrade> grades,
+            Map<String, ClimberLevelResolver.ResolvedLevel> levels,
+            Instant createdAt
+    ) {
         List<CalculatedEntry> calculatedEntries =
                 new ArrayList<>();
 
@@ -290,7 +438,6 @@ public class TrainingSessionService {
                 clock.instant()
         );
 
-        return sessionId;
     }
 
     private Map<Integer, GradeResolver.ResolvedGrade> resolveGrades(
@@ -534,9 +681,9 @@ public class TrainingSessionService {
 
         if (styleRule.historyConflict()
                 && !conflictConfirmed) {
-            throw new IllegalArgumentException(
-                    "Ascent mode conflicts with climb history "
-                            + "and requires confirmation"
+            throw new AscentModeHistoryConflictException(
+                    entry.clientEntryId(),
+                    entry.ascentMode()
             );
         }
 

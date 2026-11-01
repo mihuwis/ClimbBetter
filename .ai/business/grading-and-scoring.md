@@ -155,6 +155,8 @@ Mapowanie zachowuje system i etykietę podane przez użytkownika, a do obliczeń
 
 ## 6. Profile EDL i wpływ długości
 
+Ustalenie użytkownika z 2026-10-17 (DEC-041): długość katalogowa `lengthMeters` jest osobnym faktem. Jeśli użytkownik nie poda własnej sugestii ruchów, przyjmujemy `ceil(lengthMeters × 2)`, np. 15 m → 30 ruchów. Jawne `suggestedMoveCount` ma pierwszeństwo. To edytowalna sugestia pełnej długości, nie `executedMoves`, nie EDL i nie automatyczny wybór profilu wysiłku. [Implementacja i import skalny](../documentation/outdoor-catalog.md).
+
 `EDL` oznacza expected difficulty length — spodziewaną długość trudnej części. Profil nie zastępuje całkowitej liczby ruchów; dostarcza jedynie wartość bazową.
 
 | Profil wyświetlany     | Kod roboczy              | Kiedy stosować                               | `baseEdl` |

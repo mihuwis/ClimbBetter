@@ -8,6 +8,7 @@
 /app-plan.md
 /frontend-web/front-plan.md
 /frontend-mobile/mobile-plan.md
+/docs/
 
 # Secrets and local environment configuration
 .env

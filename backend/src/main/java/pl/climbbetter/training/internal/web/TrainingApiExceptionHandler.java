@@ -5,12 +5,60 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import pl.climbbetter.training.internal.AscentModeHistoryConflictException;
 import pl.climbbetter.training.internal.TrainingSessionConflictException;
+import pl.climbbetter.training.internal.TrainingSessionVersionConflictException;
 
 @RestControllerAdvice(
         assignableTypes = TrainingSessionController.class
 )
 class TrainingApiExceptionHandler {
+
+    @ExceptionHandler(AscentModeHistoryConflictException.class)
+    ResponseEntity<ProblemDetail> handleAscentModeHistoryConflict(
+            AscentModeHistoryConflictException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+
+        problem.setTitle(
+                "Ascent mode conflicts with climb history"
+        );
+        problem.setProperty(
+                "code",
+                "ASCENT_MODE_HISTORY_CONFLICT"
+        );
+        problem.setProperty(
+                "clientEntryId",
+                exception.clientEntryId()
+        );
+        problem.setProperty(
+                "ascentMode",
+                exception.ascentMode()
+        );
+        problem.setProperty(
+                "confirmationRequired",
+                true
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(problem);
+    }
+
+    @ExceptionHandler(TrainingSessionVersionConflictException.class)
+    ResponseEntity<ProblemDetail> handleVersionConflict(
+            TrainingSessionVersionConflictException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage()
+        );
+        problem.setTitle("Training session version conflict");
+        problem.setProperty("code", "SESSION_VERSION_CONFLICT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
 
     @ExceptionHandler(TrainingSessionConflictException.class)
     ResponseEntity<ProblemDetail> handleSessionConflict(

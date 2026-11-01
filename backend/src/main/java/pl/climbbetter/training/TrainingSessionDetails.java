@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public record TrainingSessionDetails(
         UUID sessionId,
+        UUID clientSessionId,
+        long version,
         String sessionName,
         LocalDate sessionDate,
         String timeZoneId,
