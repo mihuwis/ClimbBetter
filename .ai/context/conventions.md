@@ -1,46 +1,33 @@
 # Konwencje projektu
 
-Status: zebrane ustalenia i obowiązujące nazwy; 2026-10-03.
+Aktualizacja: 2026-11-09. Źródła: [decyzje](../documentation/decisions.md), aktualny kod i model v3.
 
-## Nazwy i język
+## Nazwy i odpowiedzialności
 
-Kod i identyfikatory są po angielsku. Dokumentację objaśniamy po polsku, zachowując oryginalne nazwy domeny i API. Nowe pliki dokumentacyjne używają angielskiego `kebab-case`. Nie zmieniamy nazw historycznych plików archiwum.
+Dokumentacja po polsku; kod i nowe nazwy plików po angielsku (`kebab-case`). UI po angielsku. Java: `pl.climbbetter`, moduły `identity`, `catalog`, `training`, `reporting`, `shared`; implementacje w `internal`.
 
-| Nazwa kanoniczna                                                    | Znaczenie / rozróżnienie                                                   |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `TrainingSession`, `TrainingEntry`                                  | sesja i jedna próba/przejście/rozgrzewka --------------------------------- |
-| `Area`, `Sector`, `Climb`                                           | miejsce, opcjonalny sektor, stabilna tożsamość wspinaczki ---------------- |
-| `climbType`, `effortProfileId`                                      | dyscyplina i profil wysiłku to oddzielne pojęcia ------------------------- |
-| `baseEdl`, `edlCount`, `totalMoves`, `executedMoves`                | cztery różne wartości, EDL nie jest długością drogi ---------------------- |
-| `resultType`, `ascentMode`, `familiarityBand`                       | rezultat, deklarowany tryb i znajomość wyprowadzana z historii ----------- |
-| `protectionMode`                                                    | sposób asekuracji `LEAD` albo `TOP_ROPE`; oddzielny od OS/Flash/RP ------- |
-| `gradeIndex`, `gradePoints`, `gradeCalibrationVersion`              | indeks wewnątrz skali, wspólna kalibracja loadu i wersja tej kalibracji -- |
-| `gradeSystemCode`, `inputGradeLabel`, `canonicalGradeId`            | system i etykieta użytkownika oraz kanoniczna wycena użyta w obliczeniach |
-| `moveIntensity`, `classicLoad`, `adjustedLoad`                      | jawne metryki zamiast niejednoznacznych `score`, `points`, `LengthDivisor` |
-| `sessionDate`, `timeZoneId`                                         | lokalna data treningowa i strefa IANA ------------------------------------ |
-| `clientSessionId`, `clientEntryId`, `clientClimbId`, `clientAreaId` | stabilne identyfikatory klienta, niezależne od nazw ---------------------- |
-| `entryOrder`, `calculationModelVersion`, `version`                  | kolejność domenowa, wersja reguł i wersja rekordu ------------------------ |
+| Nazwy                                                                   | Znaczenie                                                    |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `TrainingSession`, `TrainingEntry`                                      | sesja i pojedyncza próba/przejście/rozgrzewka                |
+| `Area`, `Sector`, `Climb`                                               | miejsce, opcjonalny sektor, stabilna tożsamość wspinaczki    |
+| `climbType`, `effortProfileCode`                                        | dyscyplina i profil wysiłku                                  |
+| `totalMoves`, `executedMoves`                                           | długość wspinaczki i faktyczna praca                         |
+| `resultType`, `ascentMode`, `familiarityBand`, `protectionMode`         | rezultat, deklarowany styl, znajomość z historii, asekuracja |
+| `gradeIndex`, `gradePoints`, `gradeCalibrationVersion`                  | porządek w skali, kalibracja loadu i jej wersja              |
+| `profileIntensityIndex`, `moveIntensity`, `classicLoad`, `adjustedLoad` | waga profilu i jawnie nazwane metryki                        |
+| `sessionDate`, `timeZoneId`, `entryOrder`                               | lokalny dzień, strefa IANA, kolejność domenowa               |
+| `clientSessionId`, `clientEntryId`, `clientClimbId`, `clientAreaId`     | stabilne UUID klienta do ponawiania operacji                 |
+| `calculationModelVersion`, `version`                                    | wersja obliczeń i wersja rekordu do ochrony edycji           |
 
-## Granice odpowiedzialności
+Backend wylicza i zapisuje wyniki; klient utrzymuje szkic i formatuje odpowiedzi. Komendy, modele domenowe, zapis SQL i modele widoku mają osobne role. Nazwa obiektu nie zastępuje UUID.
 
-Backend wylicza wyniki i zapisuje snapshoty. Frontendy wyświetlają dane, przechowują szkic i formatują wartości. DTO HTTP, model domeny, encja persystencji i model widoku mają oddzielne role. Sesja należy do `training`; model karty Dashboardu nie definiuje sesji.
+## Historia i precyzja
 
-W Javie docelowo pakiety zaczynają się od `pl.climbbetter`; obecne moduły to `identity`, `catalog`, `training`, `reporting`, `shared`. Planu modułów nie przedstawiamy jako wdrożonej logiki domenowej. Szczegóły: [architektura](../documentation/architecture.md).
+Obowiązuje [model obciążenia](../business/grading-and-scoring.md): dziesiętne obliczenia, wersje i snapshoty. EDL dotyczy wyłącznie historii v1; nowe zapisy i edycje używają v3. Poziom odniesienia nie zmienia rzeczywistej wyceny. GET i identyczny retry nie przeliczają historii; edycja nie uruchamia kaskady późniejszych sesji. Lokalny dzień nie przesuwa się po zmianie strefy urządzenia.
 
-## Dane i historia
+## Dokumentacja
 
-Wyniki dziesiętne obliczamy według [modelu wyceny](../business/grading-and-scoring.md), bez `double` jako źródła zapisanych wyników. Lokalnej daty sesji nie przesuwamy przez aktualną strefę urządzenia. Zmiana katalogu nie przepisuje historycznych wyników. Korekta historii wymaga jawnej operacji i audytu.
-
-## Praca z dokumentacją
-
-Każdy istotny dokument określa datę, status i źródła. Decyzje zachowują swoje ID; ich zmiany mają uzasadnienie i odsyłacz do zastąpionego ustalenia. Bieżące luki trafiają do [decisions](../documentation/decisions.md), nie do niezależnych list pytań w każdym pliku. Sekrety i lokalne wartości połączeń nie trafiają do dokumentacji.
-
-## Formatowanie tabel Markdown
-
-Preferencja użytkownika z 2026-10-03, na podstawie tabeli „Od czego zacząć” w `.ai/README.md`:
-
-- W tworzonych i aktualizowanych tabelach wyrównujemy znaki `|` pionowo, aby tabela była czytelna również w widoku tekstowym na pełnym ekranie.
-- Szerokość każdej kolumny dopasowujemy do jej najdłuższej komórki; w źródle Markdown uwzględniamy całą składnię linków i formatowania.
-- Krótsze komórki opisowe możemy dopełniać ciągiem `-`, zgodnie z przykładem użytkownika. Wypełnienie oddzielamy spacją od treści i umieszczamy poza linkami oraz fragmentami kodu. Liczby, daty i samodzielne identyfikatory wyrównujemy spacjami, zachowując czytelność wartości.
-- Nagłówki i wiersz separatorów dopasowujemy do tych samych szerokości. Przy zmianie najdłuższego wpisu wyrównujemy całą tabelę.
-- Formatowanie nie zmienia treści ustaleń ani adresów linków. Historyczne kopie w `archive/source-snapshot` pozostają niezmienione.
+- Jeden opis reguły; pozostałe dokumenty linkują do niego. Datę i status podajemy krótko, wyniki testów wraz z datą wykonania.
+- Zachowujemy ID decyzji i historię zastąpionych ustaleń. Pytania trafiają do `decisions.md`, bieżące zadania do `priorities.md`.
+- Tabele Markdown mają pionowo wyrównane `|` i szerokości dopasowane do pełnej treści komórek, także linków. Nie zmieniamy historycznych kopii dla formatowania.
+- Sekrety, tokeny i prywatne kopie danych pozostają poza Git i dokumentacją.

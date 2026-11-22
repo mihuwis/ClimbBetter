@@ -7,6 +7,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.climbbetter.reporting.DashboardQuery;
 import pl.climbbetter.reporting.DashboardSessionSummary;
+import pl.climbbetter.reporting.DashboardSessionsPage;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,7 +21,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DashboardController.class)
+@org.springframework.test.context.ActiveProfiles("test")
+@org.springframework.context.annotation.Import(pl.climbbetter.identity.internal.ApiSecurityConfiguration.class)
 class DashboardControllerTest {
+
+    @Test
+    void returnsAPageAndPassesCursorToQuery() throws Exception {
+        when(dashboardQuery.findSessionsPage(20, "next")).thenReturn(new DashboardSessionsPage(List.of(), null));
+        mockMvc.perform(get("/api/v1/dashboard/sessions/page").param("cursor", "next"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.items").isEmpty())
+                .andExpect(jsonPath("$.nextCursor").isEmpty());
+    }
+
+    @Test
+    void invalidPaginationReturnsBadRequest() throws Exception {
+        when(dashboardQuery.findSessionsPage(20, "bad")).thenThrow(new IllegalArgumentException("Invalid session cursor"));
+        mockMvc.perform(get("/api/v1/dashboard/sessions/page").param("cursor", "bad"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_PAGINATION"));
+    }
 
     @Autowired
     MockMvc mockMvc;

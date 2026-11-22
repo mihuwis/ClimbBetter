@@ -202,7 +202,7 @@ class TrainingSessionFlowIntegrationTest {
                 )
                 .andExpect(
                         jsonPath("$[0].averageMoveIntensity")
-                                .value(14.0625)
+                                .value(7.875)
                 );
 
         mockMvc.perform(get("/api/v1/dashboard/personal-bests"))

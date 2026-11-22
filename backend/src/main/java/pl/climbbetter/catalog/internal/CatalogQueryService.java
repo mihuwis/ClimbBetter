@@ -150,7 +150,8 @@ public class CatalogQueryService {
 
     List<EffortProfileOption> findEffortProfiles() {
         return jdbcClient.sql("""
-                        SELECT code, display_name, description, base_edl
+                        SELECT code, display_name, description, base_edl,
+                               profile_intensity_index
                         FROM training.effort_profiles
                         WHERE is_active = true
                         ORDER BY code
@@ -213,6 +214,7 @@ public class CatalogQueryService {
     public record SectorOption(UUID id, UUID areaId, String name) { }
 
     public record EffortProfileOption(
-            String code, String displayName, String description, BigDecimal baseEdl
+            String code, String displayName, String description, BigDecimal baseEdl,
+            BigDecimal profileIntensityIndex
     ) { }
 }

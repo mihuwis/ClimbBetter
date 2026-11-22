@@ -84,6 +84,7 @@ class TrainingSessionCrudIntegrationTest {
             entry.remove("climbName");
             entry.put("climbId", before.entries().getFirst().climbId().toString());
             entry.put("executedMoves", 12);
+            entry.put("totalMoves", 12);
             String editedRequest = objectMapper.writeValueAsString(editedSession);
 
             mockMvc.perform(put(url).contentType("application/json")
@@ -234,10 +235,11 @@ class TrainingSessionCrudIntegrationTest {
                        started_at, ended_at, request_fingerprint, deleted_at)
                     SELECT gen_random_uuid(), gen_random_uuid(),
                            CASE WHEN n = 24 THEN :otherUserId ELSE user_id END,
-                           area_id, :name, DATE '2001-02-14', time_zone_id, duration_minutes,
+                           area_id, :name, DATE '2001-02-14', time_zone_id, 30,
                            location_name_snapshot, total_moves, classic_load, adjusted_load,
                            created_at, updated_at, version,
-                           TIMESTAMPTZ '2001-02-14 08:00:00Z', TIMESTAMPTZ '2001-02-14 09:00:00Z',
+                           TIMESTAMPTZ '2001-02-14 08:00:00Z' + (n - 1) * INTERVAL '30 minutes',
+                           TIMESTAMPTZ '2001-02-14 08:30:00Z' + (n - 1) * INTERVAL '30 minutes',
                            request_fingerprint, CASE WHEN n = 23 THEN now() ELSE NULL END
                     FROM training.training_sessions CROSS JOIN generate_series(1, 24) AS n
                     WHERE client_session_id = :clientId

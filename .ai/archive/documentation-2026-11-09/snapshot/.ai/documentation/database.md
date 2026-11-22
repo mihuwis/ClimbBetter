@@ -1,0 +1,534 @@
+# Model danych i relacje z bazą
+
+Status: schemat V23 wystarcza także dla nowego raportu miesiąc/rok; aktualizacja 2026-11-07. Training summary nie dodaje migracji, tabel ani zmian zapisanej historii. Pełny backend 210/210 przeszedł. [Zakres i stan raportu](period-training-summary.md); wcześniejsze migracje opisano poniżej.
+
+Aktualizacja 2026-11-08: V24 działa również na właściwej bazie Mihu po testach świeżych baz i `climbbetter_models`: `identity.user_identities` z unikalnym issuer/subject i user/issuer oraz `identity.users.profile_completed_at`. Po prawdziwym Google Sign-In UID powiązano z istniejącym UUID002. Kontrole potwierdziły niezmienione pełne rekordy historii/katalogu/audytu i wcześniejsze pola użytkowników; nadal17 aktywnych sesji. Odbiór profilu/UI opisuje [raport Firebase Auth](firebase-authentication-local.md). Zakres profilu zatwierdzono w DEC-051, implementację w DEC-052.
+
+## Odczyt Training summary — 2026-11-07
+
+`PeriodSummaryRepository` używa istniejących `training.training_sessions`, `training.training_entries` i `reporting.achievement_ascents`. Zakres bazuje na session_date: początek miesiąca/roku włącznie, początek kolejnego okresu wyłącznie; tylko bieżący użytkownik i nieusunięte sesje. Rok żądania to 1–9998. Cała sesja należy do swojej daty treningowej, również gdy kończy się po północy.
+
+JOIN wpisów agregujemy po ID sesji, aby wiele wpisów nie zwielokrotniło duration_minutes. Po filtrze dyscypliny sumujemy wyłącznie pasujące executed_moves/classic_load/adjusted_load, zachowując pełny czas pasującej sesji. Wszystkie wartości są odczytywane ze snapshotów; katalog ani kalkulator nie zastępują historycznych wycen i wyników. Dwa odczyty mają wspólny snapshot REPEATABLE_READ. Puste dni/miesiące są uzupełniane w serwisie: sumy/liczniki 0, średnie/maksima NULL.
+
+Koło stylów korzysta z kwalifikacji istniejącego widoku, bez wędki. Okres i dyscyplina są filtrowane przed wyborem najlepszego udanego OS > FLASH > RP na climbId. Nie powstaje materializowana tabela miesięcznych osiągnięć; rocznej unikalności nie wyliczamy przez sumowanie miesięcznych liczników. Raport nie zapisuje estymowanego czasu dyscyplin ani nowych snapshotów loadu. Istniejące indeksy sesji/wpisów wystarczają do wdrożonego zakresu; nie dodano indeksu bez potrzeby wynikającej z pomiaru. [API](api.md#training-summary--2026-11-07), [decyzje i zakres](period-training-summary.md).
+
+## Snapshot poziomu odniesienia v3 — 2026-11-04
+
+`V23__add_recency_level_reference_snapshots.sql` rozszerza `training.training_entries` o siedem nullable kolumn:
+
+- `effective_current_level_index` i `effective_relative_grade_diff` typu `NUMERIC(20,10)`;
+- `level_reference_source` i `level_reference_algorithm_version` typu `TEXT`;
+- `level_reference_horizon_days` i `level_reference_sample_size` typu `INTEGER`;
+- `level_reference_history_weight NUMERIC(11,10)`.
+
+Migracja zastępuje trzy ograniczenia wersji/wariantu/cruxa z V18, dopuszczając v3 z tymi samymi wymaganiami intensywności i cruxa co v2. Nowy CHECK wymaga wszystkich metadanych dla ocenianego v3: indeksu nieujemnego, dokładnej różnicy `grade_index - effective_current_level_index`, niepustego źródła i wersji estymatora, dodatniego horyzontu, nieujemnej liczby obserwacji oraz wagi z zakresu 0–1. Całkowity `current_level_index` jest podłogą efektywnego indeksu. Wpisy v1/v2 i WARMUP muszą mieć wszystkie siedem nowych pól puste. CHECK używa `IS TRUE`, aby nie dopuścić niekompletnych danych przez SQL `UNKNOWN`.
+
+V23 nie aktualizuje historycznych wpisów, wycen, punktów ani loadów; dotychczasowe wiersze otrzymują wyłącznie nowe pola `NULL`. Nie powstaje tabela dziennych poziomów ani piramidy. Konfiguracja domyślna to 730 dni, bez TOP_ROPE i bez ważenia próby mniejszej niż 10 wspinaczek; źródło, wersja z ustawieniami i horyzont są zachowane w snapshocie. [Reguły i implementacja](recency-load.md).
+
+`relative_effort_multiplier` zachowuje istniejący typ `NUMERIC(8,4)`. W v3 interpolowany mnożnik zaokrąglamy HALF_UP do 4 miejsc przed obliczeniem Adjusted Load, a efektywny indeks zachowuje 10 miejsc. Nie zmieniamy precyzji ani wartości starych kolumn. Nowy POST i jawny PUT zapisują v3 z audytem; GET i identyczne retry odczytują dotychczasowy snapshot. Poniższe sekcje zachowują historyczny opis wcześniejszych migracji.
+
+## Projekcje osiągnięć — 2026-11-03
+
+V21 dodaje `reporting.achievement_ascents` (ASCENT, droga wyłącznie LEAD, nieusunięta sesja) i `reporting.session_achievement_maxima`. V22 zmienia drugi widok na skorelowane wyszukania dla wybranych sesji; wykorzystuje istniejące indeksy zaczynające się od session_id. Nie powstała tabela piramidy ani nowe dane treningowe. Historyczne maxima i Fast RP są korygowane w odczycie, bez backfillu zapisanych obliczeń. Local potwierdził V21/V22; pełne skróty 19 sesji, 145 wpisów i revisions oraz sumy loadów pozostały identyczne. [Szczegóły](achievement-pyramid-backend.md).
+
+## Schemat modelu v2 przy wdrożeniu — 2026-11-01
+
+`V16__add_profile_intensity_index.sql` dodaje nullable `training.effort_profiles.profile_intensity_index` z ograniczeniem dodatniości. `V17__set_circuit_profile_intensity_index.sql` uzupełnia obwód. `V18__add_v2_training_entry_snapshots.sql` dodaje snapshoty wpisu i bazowe indeksy profili cruxowych. `V19__retire_short_continuous_profile.sql` wyłącza `SHORT_CONTINUOUS_ROUTE`, zachowując jego rekord i historyczne referencje. `V20__refresh_effort_profile_descriptions.sql` zmienia wyłącznie opisy siedmiu aktywnych profili, bez zmiany indeksów, ograniczeń ani danych treningowych. Flyway potwierdził na local 21 zwalidowanych migracji i wersję schematu 20.
+
+Końcowe aktywne indeksy: `BOULDER` i `SHORT_BOULDERY_ROUTE` — 10; `MEDIUM_CONTINUOUS`, `MEDIUM_CRUX` i `CIRCUIT` — 7; `LONG_CONTINUOUS` i `LONG_CRUX` — 5. `base_edl` pozostaje w słowniku dla zgodności danych, lecz nowe obliczenia go nie używają. Reguły i kalibracja są opisane w [modelu wyceny](../business/grading-and-scoring.md).
+
+V18 dodaje osiem nullable kolumn `training.training_entries`:
+
+- `profile_intensity_index NUMERIC(8,4)`;
+- `hard_move_count` i `easy_move_count` typu `INTEGER`;
+- `hard_move_intensity` i `easy_move_intensity` typu `NUMERIC(16,10)`;
+- `base_move_grade_label`, `hard_move_grade_label` i `easy_move_grade_label` typu `TEXT`.
+
+Ograniczenia dopuszczają wyłącznie wersje `v1` i `v2`. Oceniany v1 wymaga dotychczasowych EDL i pustych nowych pól; oceniany v2 wymaga dodatniego indeksu oraz `NULL` w `base_edl` i `edl_count`. V2 z profilem cruxowym wymaga kompletnych liczników, intensywności i etykiet, poprawnego zaokrąglenia podziału oraz sumy liczników równej `executed_moves`. Dla pozostałych profili i v1 pola cruxa są puste. Rozgrzewka zachowuje puste parametry wyceny i zerowe loady. Złożone CHECK używają `IS TRUE`, aby wynik SQL `UNKNOWN` nie przepuszczał niekompletnych danych. Klucze obce i snapshoty dodane przez V9 pozostają zachowane.
+
+Migracje nie kasują ani nie przeliczają historycznych sesji i wpisów. Kontrola danych przed i po zastosowaniu V16–V19 na local potwierdziła niezmienione liczby rekordów, sumy loadów i hash kontrolny; [dowód i stan weryfikacji](backend-verification.md). Nowy POST i jawny PUT zapisują v2; PUT zachowuje pełniejsze snapshoty przed/po w istniejących kolumnach JSONB audytu. Odczyt v1 pozostaje obsługiwany bez utrzymywania kalkulatora EDL. Poniższe wcześniejsze opisy migracji i planowanego modelu zachowują kontekst historyczny; aktualny schemat local kończy się na V20.
+
+Aktualizacja 2026-10-17: Flyway zastosował na local również `V15`: kraj/region Area, tabela Sector, wersjonowane aliasy wycen, opcjonalna wycena katalogowego projektu i długość Climb w metrach. Zaimportowano publiczną Dolinę Bolechowicką i 28 pozycji Filaru Abazego; dane i dostęp potwierdzono SQL. [Szczegóły](outdoor-catalog.md).
+
+Aktualizacja 2026-10-17: w kodzie dodano `V13` z tabelą rewizji sesji i `V14` z `deleted_at`. Edycja zapisuje snapshot przed/po, a usunięcie zachowuje dane i audyt, wykluczając sesję z odczytów oraz historii do obliczeń. Kompilacja przeszła; zastosowanie nowych migracji na PostgreSQL czeka na testy. Szczegóły: [backend-crud-handoff](backend-crud-handoff.md).
+
+Backend używa JPA, PostgreSQL i Flyway oraz `ddl-auto=validate`. Migracje `V1`–`V12` tworzą schematy modułów, tabele pierwszego pionu zapisu, słowniki wycen, profile, reguły obliczeń i fingerprint żądania sesji. Zapis korzysta bezpośrednio z `JdbcClient`, bez encji JPA. Poniższy pełny model nadal obejmuje także elementy późniejszych etapów.
+
+PostgreSQL 17.6 w Testcontainers przyjął migracje `V1`–`V12`. Potwierdzony test pionowy utworzył prywatne Area i wspinaczki, zapisał sesję z trzema wpisami oraz odczytał jej summary przez Dashboard. Testy potwierdziły też rollback całego agregatu, brak duplikatu po identycznym retry oraz zachowanie pierwotnego rekordu po konflikcie fingerprintu. Lokalna baza korzysta z tego samego przypiętego obrazu i migracji Flyway.
+
+Poniżej zachowano szczegółowe definicje encji, pól, snapshotów, relacji, warstw i ograniczeń z [CB_model](../archive/source-snapshot/docs/CB_model.md), wraz z numeracją sekcji źródłowych. Wzory i wartości liczbowe mają źródło nadrzędne w [grading-and-scoring](../business/grading-and-scoring.md). [ERD](diagrams/data-model.md) przedstawia logiczny model planowany, nie wygenerowany schemat PostgreSQL.
+
+## Zależności od nowych ustaleń web
+
+- Zapisujemy ukończoną sesję i wpisy; lokalne stany rejestrowania nie wymagają rekordów serwerowych `IN_PROGRESS`/`STOPPED`.
+- Grupowanie w Details wymaga stabilnego `climbId` i zachowania `entryOrder`, nie nowej encji „grupa po nazwie”.
+- Dla sesji mieszanej najwyższe ukończone wyceny muszą być rozdzielone według skal. Starsze pojedyncze `maxCompletedGrade` nie ustala ostatecznego DTO.
+- Jedno Area na sesję jest zatwierdzoną zasadą biznesową (DEC-018; zamknięte `OPEN-03`). Pozostaje jedno `TrainingSession.areaId`; Climb i opcjonalny Sector każdego wpisu muszą należeć do tego Area.
+- Kolejność między sesjami (`OPEN-12`) i reprezentacja czasu (`OPEN-08`) nadal wpływają na finalne DDL. Pola rozgrzewki rozstrzyga DEC-026.
+- Opis i miniatura drogi są potrzebami prezentacji; nie potwierdzono jeszcze ich pól ani zasad historyczności (`OPEN-06`).
+- Unique client ID nie wystarcza do ochrony historii przy równoległych zapisach różnych sesji; to osobny problem kontraktu (`OPEN-12`).
+
+## 3. Mapa modelu
+
+```text
+User
+ ├── UserGradeReference ──> Grade
+ ├── TrainingSession ─────> Area
+ │    ├── TrainingEntry ──> Climb? / Grade / StyleRule / EffortProfile
+ │    │    └── CalculationSnapshot
+ │    └── SessionSummary
+ ├── UserAreaStatus ──────> Area
+ └── UserClimbStatus ─────> Climb
+
+Area (pełne albo szybki prywatny draft)
+ └── Sector (opcjonalny)
+      └── Climb
+
+Grade, StyleRule, EffortProfile i RelativeEffortBand
+ └── wersjonowane dane konfiguracyjne używane do utworzenia snapshotu wpisu
+```
+
+Najważniejszym agregatem transakcyjnym jest `TrainingSession`. Katalog (`Area`, `Sector`, `Climb`) oraz słowniki mają własny cykl życia. Snapshot w sesji odcina historyczny wynik od ich późniejszych zmian.
+
+## 4. Encje i obiekty modelu
+
+### 4.1. `User`
+
+Minimalna reprezentacja właściciela danych. Pełny profil i logowanie mogą zostać dodane później.
+
+| Pole              | Znaczenie                                | Status        |
+| ----------------- | ---------------------------------------- | ------------- |
+| `id`              | stabilny UUID użytkownika ClimbBetter -- | ustalone ---- |
+| `displayName`     | nazwa wyświetlana ---------------------- | ustalone ---- |
+| `email`           | opcjonalny adres do przyszłego auth ---- | propozycja v1 |
+| `externalSubject` | identyfikator z przyszłego dostawcy OIDC | propozycja v1 |
+| `createdAt`       | czas utworzenia ------------------------ | ustalone ---- |
+
+W środowisku lokalnym istnieje jeden użytkownik developerski o deterministycznym UUID. `userId` nie jest przyjmowany z body zwykłych requestów.
+
+### 4.2. `UserGradeReference`
+
+Określa poziom odniesienia wspinacza obowiązujący w danym okresie. Nie jest życiowym maksimum zapisanym na zawsze.
+
+| Pole                                                                    | Znaczenie                                                                                           |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `id`, `userId`                                                          | tożsamość rekordu i właściciela ------------------------------------------------------------------- |
+| `discipline`                                                            | `BOULDER` albo `ROUTE`; `CIRCUIT` korzysta z `ROUTE` ---------------------------------------------- |
+| `gradeId`                                                               | wycena będąca punktem odniesienia ----------------------------------------------------------------- |
+| `gradeIndex`                                                            | utrwalony indeks poziomu -------------------------------------------------------------------------- |
+| `source`                                                                | np. `ONBOARDING`, `SESSION_INFERENCE`, `HISTORY_MODEL`, `MANUAL_OVERRIDE`, `IMPORT` --------------- |
+| `validFrom`, `validTo`                                                  | okres obowiązywania; `validTo` może być puste ----------------------------------------------------- |
+| `algorithmVersion`                                                      | wersja algorytmu estymacji; puste dla ręcznego poziomu -------------------------------------------- |
+| `sampleSize`                                                            | liczba różnych ukończonych wspinaczek bez rozgrzewek w dwuletnim oknie ---------------------------- |
+| `confidence`                                                            | `UNASSESSED`, `LOW`, `MEDIUM` albo `HIGH`; siła dowodów, a nie poziom sportowy -------------------- |
+| `estimationMethod`, `supportScore`                                      | `LOW_SAMPLE_MAX`, `PYRAMID_SUPPORT`, `ATTEMPT_FALLBACK` albo źródło deklarowane oraz wynik wsparcia |
+| `supportAtOrAboveCount`, `supportMinusOneCount`, `supportMinusTwoCount` | surowe liczności warstw użytych do wyjaśnienia wyniku --------------------------------------------- |
+| `windowStart`, `windowEnd`                                              | dokładne okno historii użyte przez estimator ------------------------------------------------------ |
+
+W onboardingu użytkownik może podać najwyższy poziom pokonany w ostatnich dwóch latach, osobno dla balda i drogi. Może też pozostawić wartość pustą. Poziom jest wtedy wyznaczany po sesji: najpierw z ukończonych przejść, a przy ich braku z konserwatywnego fallbacku jeden stopień poniżej najłatwiejszej próbowanej wyceny.
+
+Przy 1–9 różnych ukończonych wspinaczkach poziomem jest maksimum z dwóch lat, `estimationMethod = LOW_SAMPLE_MAX` i `confidence = LOW`. Od 10 wspinaczek obowiązuje wersjonowany Pyramid Support. Dla każdego kandydata `G`:
+
+```text
+support(G) = min(uniqueClimbsAtOrAbove(G), 2) × 1.00
+           + min(uniqueClimbsAt(G - 1), 4)   × 0.50
+           + min(uniqueClimbsAt(G - 2), 8)   × 0.25
+```
+
+Poziomem jest najwyższy stopień `G`, nie wyższy od faktycznego maksimum, dla którego `support(G) >= 3.00`. `G - 1` i `G - 2` oznaczają kolejne indeksy właściwej skali. Próby nie podnoszą dojrzałej estymacji; są wyłącznie fallbackiem przy braku przejścia. Estymacja wyznaczona po pierwszej sesji może posłużyć do policzenia `adjustedLoad` tej samej sesji.
+
+Confidence v1 jest wyprowadzane z zachowanych dowodów:
+
+- `UNASSESSED` — poziom deklarowany/importowany bez oceny automatycznej;
+- `LOW` — fallback z prób albo mniej niż 10 różnych przejść;
+- `MEDIUM` — Pyramid Support z wynikiem od `3.00` do poniżej `4.50` albo z pustą jedną z trzech warstw;
+- `HIGH` — co najmniej 10 przejść, `supportScore >= 4.50` i niepuste wszystkie trzy warstwy.
+
+Confidence nie zmienia poziomu ani loadu. Informuje, jak mocno historia wspiera wynik. Progi należą do `algorithmVersion`, dlatego mogą być rozwijane bez utraty interpretacji starych estymacji.
+
+W specyfikacji poziomu popartego piramidą OS, Flash, Fast RP i pozostałe RP dostarczają takiego samego dowodu wyceny; styl nie jest dodatkową wagą. DEC-045 wyklucza wędkę z osiągnięć: droga wymaga `ASCENT` i `LEAD`, a `TOP_ROPE` pozostaje treningiem. Dla piramidy dana katalogowa wspinaczka jest dowodem tylko raz po filtrze okresu i stylu. Widok RP obejmuje RP/OS/Flash, OS wyłącznie OS. Reprezentatywną wyceną jest snapshot pierwszego kwalifikującego przejścia w okresie. [Szczegóły i przykłady](../business/achievement-pyramid.md).
+
+Stan kodu 2026-11-03: raportowy Pyramid Support jest wdrożony, a widoki osiągnięć wykluczają wędkę. Dotychczasowy resolver poziomu do loadu pozostaje bez zmian; zakres jego zmiany i fallback historii wyłącznie treningowej wymagają OPEN-20. Pola `resultType`, `protectionMode`, `climbId` i snapshot wyceny wystarczyły do kwalifikacji osiągnięć, bez nowej tabeli piramidy ani usuwania treningu na wędkę.
+
+Każdy wpis zapisuje indeks, źródło i wersję poziomu użytego podczas obliczenia. Późniejsza zmiana poziomu nie zmienia automatycznie historycznego loadu.
+
+### 4.3. `Area`
+
+Miejsce treningu lub wspinaczki: ściana, rejon skalny, prywatny panel albo inne miejsce. Model obsługuje dwa równorzędne przepływy:
+
+1. **Area uporządkowane** — użytkownik albo oficjalny pakiet opisuje kraj, region, rejon i opcjonalny sektor/skałę, a następnie konkretne wspinaczki.
+2. **Szybka lokalizacja** — podczas sesji wystarcza nazwa, np. `Zimny Dół`. Backend zapisuje ją jako prywatny draft Area bez wymuszania kraju, regionu i sektora. Draft można później uzupełnić albo połączyć z Area użytkownika/oficjalnym.
+
+Struktura katalogowa v1 pozostaje prosta:
+
+```text
+Area → opcjonalny Sector → Climb
+```
+
+| Pole                                   | Znaczenie                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| `id`                                   | UUID miejsca ----------------------------------------------------------- |
+| `clientAreaId`                         | opcjonalny UUID klienta dla offline i idempotencji draftu -------------- |
+| `name`                                 | nazwa, np. `Bronx`, `Garaż`, `Zimny Dół` ------------------------------- |
+| `areaType`                             | np. `ARTIFICIAL`, `ROCK`, `OTHER` -------------------------------------- |
+| `facilityType`                         | opcjonalnie `BOULDER_GYM`, `ROPE_GYM`, `MIXED_GYM`, `HOME_WALL`, `BOARD` |
+| `accessType`                           | opcjonalny sposób dostępu, np. prywatny/publiczny ---------------------- |
+| `country`, `region`, `city`            | np. Polska, Jura Południowa; opcjonalne dla draftu --------------------- |
+| `displayLocation`                      | gotowy, stabilny opis lokalizacji do prostego MVP ---------------------- |
+| `ownerId`                              | właściciel prywatnego miejsca; puste dla danych wspólnych -------------- |
+| `resolutionStatus`                     | `DRAFT`, `RESOLVED` albo `MERGED` -------------------------------------- |
+| `sourceType`                           | `USER`, a w przyszłości również `OFFICIAL_PACKAGE` --------------------- |
+| `sourceExternalId`, `sourceVersion`    | opcjonalne dane przyszłego pobranego pakietu Area ---------------------- |
+| `isPublic`, `isOfficial`, `isArchived` | widoczność i cykl życia ------------------------------------------------ |
+| `createdAt`, `updatedAt`, `version`    | audyt i optimistic locking --------------------------------------------- |
+
+Przykład uporządkowany: `Polska → Jura Południowa → Dolinka Bolechowicka → Abazy → Ryski nad tablicą`, gdzie Dolinka jest `Area`, Abazy opcjonalnym `Sector`, a Ryski `Climb`. Nie budujemy generycznego drzewa parent–child w v1.
+
+Draft `Zimny Dół` może istnieć bez wiedzy, gdzie leży, i domyślnie nie pojawia się w ręcznie uporządkowanym „My Areas”. Późniejsze scalenie zachowuje sesje i client ID. W przyszłości oficjalne pakiety rejonów mogą dostarczać gotowe Area, Sector i Climb bez zmiany tego modelu.
+
+### 4.4. `Sector`
+
+Opcjonalny poziom grupujący wspinaczki w większym `Area`.
+
+| Pole           | Znaczenie                       |
+| -------------- | ------------------------------- |
+| `id`, `areaId` | tożsamość i rodzic ------------ |
+| `name`         | nazwa sektora ----------------- |
+| `description`  | opcjonalny opis --------------- |
+| `isArchived`   | ukrycie bez niszczenia historii |
+
+Małe `Area` nie musi mieć żadnego sektora. `Climb.sectorId` jest nullable.
+
+### 4.5. `Climb`
+
+Stabilna tożsamość balda, drogi z liną albo obwodu.
+
+| Pole                                   | Znaczenie                                                    |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `id`                                   | UUID serwera ----------------------------------------------- |
+| `clientClimbId`                        | opcjonalny UUID utworzony przez klienta offline ------------ |
+| `areaId`, `sectorId`                   | miejsce i opcjonalny sektor -------------------------------- |
+| `name`                                 | bieżąca nazwa katalogowa ----------------------------------- |
+| `climbType`                            | `BOULDER`, `ROUTE` albo `CIRCUIT` -------------------------- |
+| `gradeId`                              | bieżąca wycena katalogowa ---------------------------------- |
+| `defaultEffortProfileId`               | opcjonalna sugestia profilu, nigdy bezwarunkowe źródło wpisu |
+| `suggestedMoveCount`                   | opcjonalna sugestia pełnej długości ------------------------ |
+| `ownerId`                              | właściciel prywatnego rekordu ------------------------------ |
+| `isPublic`, `isVerified`, `isArchived` | status katalogowy ------------------------------------------ |
+| `createdAt`, `updatedAt`, `version`    | audyt i kontrola konfliktów -------------------------------- |
+
+`TrainingEntry` może wskazywać `Climb`, ale zawsze zachowuje własną nazwę, wycenę i lokalizację w snapshocie.
+
+### 4.6. `Grade`
+
+Pozycja rozszerzalnego słownika wycen.
+
+| Pole                 | Znaczenie ------------------------------------------------------------------ |
+| -------------------- | -------------------------------------------------------------------------- |
+| `id`                 | stabilny UUID ------------------------------------------------------------ |
+| `label`              | etykieta prezentacyjna, np. `6B+` ---------------------------------------- |
+| `scaleType`          | `BOULDER_FONT` albo `ROUTE_FRENCH` --------------------------------------- |
+| `gradePoints`        | wspólna, przybliżona miara wejściowa do obliczeń loadu ------------------ |
+| `gradeIndex`         | porządek stopnia wyłącznie wewnątrz jednej skali ------------------------ |
+| `calibrationVersion` | wersja kalibracji `gradePoints` ------------------------------------------ |
+| `isActive`           | możliwość wyboru w nowych wpisach ---------------------------------------- |
+
+Skale mają oddzielne rekordy i własne indeksy. `ROUTE_FRENCH` obejmuje początkowo `1–9c`, a `BOULDER_FONT` `2, 3, 4-, 4, 4+, 5, 5+, 6A…9A+`. Punkty balda wynikają z wersjonowanej kalibracji względem orientacyjnych odpowiedników dróg; nie oznacza to dokładnej konwersji między dyscyplinami. Obwód używa `ROUTE_FRENCH`.
+
+Historyczna sesja nie pobiera ponownie `gradePoints`, `gradeIndex` ani `calibrationVersion` z aktualnego `Grade`.
+
+#### 4.6.1. `GradeAlias`
+
+Przyszłe systemy wejścia i prezentacji nie powielają punktacji. Rekord aliasu zawiera `systemCode`, etykietę użytkownika, `canonicalGradeId`, `mappingVersion` i `isActive`. Przykładowo `BOULDER_V:V10` może wskazywać kanoniczny rekord `BOULDER_FONT:7C+`, a zatwierdzona etykieta skali Kurtyki rekord `ROUTE_FRENCH`. Snapshot zachowuje oryginalny system i etykietę oraz kanoniczne dane użyte w obliczeniu.
+
+Unikalność obowiązuje dla `(systemCode, label, mappingVersion)`. Zmiana przybliżonego mapowania tworzy nową wersję i nie przelicza automatycznie historii.
+
+### 4.7. `EffortProfile`
+
+Profil EDL opisujący charakter i spodziewaną długość trudnej części wspinaczki.
+
+| Pole                 | Znaczenie                             |
+| -------------------- | ------------------------------------- |
+| `id`, `code`, `name` | stabilna tożsamość techniczna i nazwa |
+| `baseEdl`            | wartość startowa używana w obliczeniu |
+| `description`        | podpowiedź dla użytkownika ---------- |
+| `isActive`           | dostępność w nowych wpisach --------- |
+
+Słownik zawiera wyłącznie dodatnie profile EDL ocenianych wpisów. Rozgrzewka jest osobnym wariantem wpisu i nie wskazuje `EffortProfile`.
+
+Profil jest wybierany dla konkretnego wpisu. Nie jest tym samym co `climbType` ani `totalMoves`.
+
+### 4.8. Rezultat, tryb i reguła stylu
+
+Wcześniejszy, łączony `EntryStyle` został rozdzielony na trzy niezależne informacje zapisane przy wpisie:
+
+| Pole              | Znaczenie                                                                    |
+| ----------------- | ---------------------------------------------------------------------------- |
+| `resultType`      | `ASCENT`, `ATTEMPT` albo `WARMUP` — fakt ukończenia ------------------------ |
+| `ascentMode`      | deklarowane `OS`, `FLASH` albo `RP` ---------------------------------------- |
+| `familiarityBand` | `FIRST_CONTACT`, `LOW`, `NORMAL` albo `ESTABLISHED`, wyprowadzane z historii |
+
+Mnożnik pochodzi z konfiguracyjnej `StyleRule`:
+
+| Pole `StyleRule`                              | Znaczenie                     |
+| --------------------------------------------- | ----------------------------- |
+| `id`, `code`, `name`                          | stabilna tożsamość i etykieta |
+| `resultType`, `ascentMode`, `familiarityBand` | kombinacja wybierająca regułę |
+| `multiplier`                                  | wynikowy mnożnik stylu ------ |
+| `description`, `isActive`                     | opis i dostępność ----------- |
+
+Taki model uniemożliwia kombinację nieukończonej próby ze stylem ukończonego RP i pozwala automatyzować znajomość bez odbierania użytkownikowi deklaracji OS/Flash/RP. Nie istnieje osobne `isCompleted`; źródłem prawdy jest `resultType`.
+
+`familiarityBand` jest wyznaczany z liczby wszystkich wcześniejszych prób i przejść tej samej wspinaczki z ostatnich dwóch lat, bez rozgrzewek. Wcześniejszy wpis tej samej sesji już zwiększa licznik:
+
+- `0` → `FIRST_CONTACT`;
+- `1–10` → `LOW`;
+- `11–20` → `NORMAL`;
+- `>20` → `ESTABLISHED`.
+
+Ukończone RP w drugiej albo trzeciej próbie w całej znanej historii tej wspinaczki tworzy pochodną informację `fastRp = true`. Ten licznik nie używa przesuwnego okna dwóch lat: dawna próba nadal wyklucza fałszywe osiągnięcie Fast RP. Jest to osiągnięcie i element profilu wspinacza, ale nie zmienia mnożnika loadu. `FLASH` pozostaje osobnym trybem/osiągnięciem, mimo że punktowo ma tę samą wagę co OS.
+
+Deklaracja OS/Flash sprzeczna z istniejącą historią wymaga jawnego potwierdzenia. Bez potwierdzenia backend zwraca konflikt domenowy; po potwierdzeniu zapisuje deklarację wraz z liczbą wcześniejszych kontaktów i audytem override. Nie stosujemy twardej blokady, ponieważ historia może być niepełna albo wspinaczki mogły zostać błędnie połączone.
+
+### 4.9. `RelativeEffortBand`
+
+Konfiguracja mnożnika trudności względnej.
+
+| Pole                                       | Znaczenie                                                  |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| `id`                                       | UUID                                                       |
+| `minGradeDifference`, `maxGradeDifference` | zakres różnicy indeksów; dla pojedynczej wartości są równe |
+| `multiplier`                               | mnożnik względnego wysiłku ------------------------------- |
+| `policy`                                   | opcjonalne oznaczenie zachowania na granicy modelu ------- |
+| `isActive`                                 | czy rekord uczestniczy w nowych obliczeniach ------------- |
+
+Aktywne bandy nie mogą się nakładać. Dla różnicy `<= -6` obowiązuje floor `0.20`, a dla `>= 5` cap `5.00`. Rzeczywista różnica pozostaje w snapshocie; wpis poza zakresem ma `outsideCalibratedRange = true`.
+
+### 4.10. `TrainingSession`
+
+Aggregate root jednego treningu w jednym Area — rejonie wspinaczkowym albo na ściance (DEC-018). Może obejmować różne sektory i wspinaczki tego miejsca. Dzień lub wyjazd obejmujący różne Area zapisujemy jako osobne sesje.
+
+| Grupa               | Pola                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tożsamość --------- | `id`, `userId`, `clientSessionId`                                                                                                          |
+| Kalendarz --------- | `sessionDate`, `timeZoneId`                                                                                                                |
+| Czas -------------- | `durationMinutes`, opcjonalne `startedAt`, `endedAt` ------------------------------------------------------------------------------------- |
+| Kontekst ---------- | `areaId`, `locationNameSnapshot`, opcjonalne `sessionName`, `sessionNameSource`, `notes` ------------------------------------------------- |
+| Historia techniczna | `createdAt`, `updatedAt`, `version`                                                                                                        |
+| Podsumowanie ------ | `totalMoves`, `classicLoad`, `adjustedLoad`, `averageMoveIntensity`, `entryCount`, `completedClimbsCount`, opcjonalnie `maxCompletedGrade` |
+
+`clientSessionId` jest kluczem idempotencji i przyszłej synchronizacji offline. `requestFingerprint` przechowuje SHA-256 znormalizowanej komendy i odróżnia bezpieczne powtórzenie od próby użycia tego samego klucza dla innych danych. Kolumna jest nullable wyłącznie dla zgodności ze starszymi rekordami; nowy zapis API zawsze przekazuje fingerprint. `areaId` wskazuje pełne Area albo automatycznie utworzony prywatny draft. Snapshot nazwy miejsca chroni historię przed późniejszym uzupełnieniem lub scaleniem katalogu.
+
+`sessionName` jest opcjonalne. Gdy użytkownik go nie poda, powstaje stabilna nazwa w stylu `Wieczorna sesja boulderowa na Bronx`, a `sessionNameSource = GENERATED`. Nazwę można później edytować; wtedy źródło zmienia się na `USER`.
+
+Podsumowanie jest zapisanym cache’em odtwarzalnym z wpisów, a nie niezależnym źródłem prawdy. Model periodyzacji nie dodaje kolumn do sesji v1; powstanie później jako rozszerzenie modułu planowania.
+
+### 4.11. `TrainingEntry`
+
+Jedna próba, jedno przejście albo rozgrzewka. Kolejność wpisów w sesji jest częścią danych.
+
+Rozgrzewka jest osobnym wariantem wpisu i wymaga tylko dodatniego `executedMoves`. Nie wymaga identyfikacji wspinaczki, wyceny, `totalMoves`, profilu EDL, trybu przejścia ani sposobu asekuracji. Pola EDL i intensywności są dla niej nieobecne, a oba loady mają wartość `0` (DEC-026). Finalne DDL musi wyrażać te różne warunki wariantów bez sztucznych zer dla danych, które nie dotyczą rozgrzewki.
+
+| Grupa                    | Pola                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tożsamość -------------- | `id`, `sessionId`, opcjonalny `clientEntryId` --------------------------------------------------------------------------------------------------------------------------- |
+| Kolejność -------------- | `entryOrder`, opcjonalne `attemptBlockId`, `attemptNumber` -------------------------------------------------------------------------------------------------------------- |
+| Identyfikacja wspinaczki | opcjonalne `climbId`, `clientClimbId`, `climbName`, `climbType` --------------------------------------------------------------------------------------------------------- |
+| Klasyfikacja ----------- | `gradeId`, `effortProfileId`, `resultType`, `ascentMode`, wyprowadzone `contactCountBeforeTwoYears`, `attemptOrdinalAllTime`, `familiarityBand`, `styleRuleId` i `fastRp` |
+| Fakty z próby ---------- | `totalMoves`, `executedMoves`, jednoznaczny rezultat, opcjonalne `notes` ------------------------------------------------------------------------------------------------ |
+| Historia techniczna ---- | `createdAt`, `updatedAt`, `version`                                                                                                                                       |
+| Wynik ------------------ | osadzony `CalculationSnapshot` ------------------------------------------------------------------------------------------------------------------------------------------ |
+
+Wpis musi obsługiwać trzy przypadki identyfikacji wspinaczki:
+
+1. istniejące `climbId`;
+2. znane klientowi `clientClimbId`, które zostanie zmapowane na serwerze;
+3. nazwa robocza i dane wystarczające do zapisania wpisu bez wcześniejszego katalogu — backend tworzy prywatną, niezweryfikowaną wspinaczkę pod pełnym albo draftowym Area i zwraca stabilne `climbId`.
+
+`clientClimbId` zapobiega duplikatom podczas synchronizacji. Późniejsze połączenie prywatnej wspinaczki z wpisem katalogowym zachowuje historię i pozostawia audyt mapowania.
+
+### 4.12. `CalculationSnapshot`
+
+Niezmienny obiekt wartości osadzony w rekordzie `TrainingEntry`. Zawiera wszystko, co pozwala wyświetlić i wyjaśnić historyczne obliczenie bez odpytywania bieżących słowników.
+
+Minimalna zawartość:
+
+- `climbName`, `areaName` lub czytelny breadcrumb;
+- `climbType`;
+- `gradeLabel`, `gradePoints`, `gradeIndex`;
+- `currentLevelGradeLabel` i `currentLevelIndex`;
+- `effortProfileName`, `baseEdl`, `edlCount`;
+- `styleRuleName`, `entryResultType`, `ascentMode`, `contactCountBeforeTwoYears`, `attemptOrdinalAllTime`, `familiarityBand`, `fastRp`, `styleMultiplier`;
+- `relativeGradeDiff`, `relativeEffortMultiplier`, `outsideCalibratedRange`;
+- `moveIntensity`, `classicLoad`, `adjustedLoad`;
+- `calculationModelVersion`;
+- opcjonalnie `calculatedAt`.
+
+Snapshot nie jest osobnym agregatem. W PostgreSQL jest zestawem jawnych kolumn tabeli `training_entries`; ułatwia to filtrowanie, agregowanie i audyt.
+
+`Grade` należy do dokładnie jednej skali. Kluczowe pola słownika to `scaleCode`, `label`, `gradeIndex`, `gradePoints`, `calibrationVersion` i `isActive`. `gradeIndex` jest unikalny tylko w obrębie skali i zasila różnicę względem poziomu użytkownika tej samej dyscypliny. `gradePoints` mogą być wspólne między skalami i dla balda wynikają z jawnej kalibracji v1; snapshot wpisu zachowuje użyte punkty oraz wersję kalibracji.
+
+### 4.13. `SessionSummary`
+
+Obiekt wartości wyliczany wyłącznie z aktywnych wpisów sesji:
+
+- `totalMoves` — suma wykonanych ruchów, także rozgrzewkowych;
+- `classicLoad` — suma klasycznego obciążenia wpisów;
+- `adjustedLoad` — suma skorygowanego obciążenia wpisów;
+- `averageMoveIntensity` — średnia `moveIntensity` ważona wykonanymi ruchami ocenianych wpisów;
+- `entryCount`;
+- `completedClimbsCount`;
+- opcjonalnie najwyższa ukończona wycena.
+
+Pola te są zapisane w `training_sessions` jako read cache. Po zmianie wpisu cały summary jest odtwarzany w tej samej transakcji.
+
+### 4.14. Modele późniejszych etapów
+
+Poniższe encje są potrzebne produktowo, ale nie powinny blokować pierwszego pionowego przepływu:
+
+| Model                 | Cel                                                       |
+| --------------------- | --------------------------------------------------------- |
+| `UserClimbStatus`     | ulubiona wspinaczka, projekt, ostatnie użycie ----------- |
+| `UserAreaStatus`      | ulubione i ostatnio używane miejsca --------------------- |
+| `TrainingCycle`       | zakres dat i planowanie cyklu treningowego -------------- |
+| `CalculationRevision` | audyt każdej zmiany wpływającej na historyczne obliczenie |
+| `UserGoal`            | cele tygodniowe/miesięczne po ustaleniu reguł produktu -- |
+
+## 5. Proponowana reprezentacja w PostgreSQL
+
+Schemat jest propozycją v1. Flyway ma być jedynym źródłem DDL, a Hibernate ma wyłącznie walidować zgodność mapowania.
+
+| Schemat i tabela                 | Model                                   | Kluczowe relacje                                          |
+| -------------------------------- | --------------------------------------- | --------------------------------------------------------- |
+| `identity.users`                 | `User`                                  | —                                                         |
+| `catalog.areas`                  | `Area`                                  | opcjonalnie `owner_id → users` -------------------------- |
+| `catalog.sectors`                | `Sector`                                | `area_id → areas`                                         |
+| `catalog.grades`                 | `Grade`                                 | —                                                         |
+| `catalog.climbs`                 | `Climb`                                 | `area_id`, opcjonalny `sector_id`, `grade_id`, `owner_id` |
+| `catalog.user_area_statuses`     | `UserAreaStatus`                        | złożony PK `(user_id, area_id)` ------------------------- |
+| `catalog.user_climb_statuses`    | `UserClimbStatus`                       | złożony PK `(user_id, climb_id)` ------------------------ |
+| `training.style_rules`           | `StyleRule`                             | wynikowa reguła dla rezultatu, trybu i znajomości ------- |
+| `training.effort_profiles`       | `EffortProfile`                         | —                                                         |
+| `training.relative_effort_bands` | `RelativeEffortBand`                    | —                                                         |
+| `training.user_grade_references` | `UserGradeReference`                    | `user_id`, `grade_id`                                     |
+| `training.training_sessions`     | `TrainingSession` + `SessionSummary` -- | `user_id`, `area_id`                                      |
+| `training.training_entries`      | `TrainingEntry` + `CalculationSnapshot` | `session_id`, opcjonalny `climb_id`, słowniki ----------- |
+| `training.calculation_revisions` | `CalculationRevision`                   | `entry_id`, `created_by_user_id`                          |
+| `training.training_cycles`       | `TrainingCycle`                         | poza schematem v1; przyszły moduł planowania ------------ |
+
+### 5.1. Typy danych
+
+- identyfikatory: `uuid`;
+- lokalna data treningu i zakresy poziomu: `date`;
+- chwile absolutne: `timestamptz`, mapowane na `Instant`;
+- strefa sesji: tekstowy identyfikator IANA, mapowany na `ZoneId`;
+- punkty, EDL, mnożniki i load: `numeric`, mapowane na `BigDecimal`;
+- liczby ruchów i kolejność: `integer`;
+- wersja do optimistic locking: `bigint`;
+- typy zamknięte w kodzie: tekst z check constraintem albo stabilnym kodem, nie ordinal enuma.
+
+### 5.2. Najważniejsze ograniczenia bazy
+
+- unique `(user_id, client_session_id)`;
+- unique `(owner_id, client_area_id)` dla niepustego client ID;
+- unique `(session_id, entry_order)`;
+- unique `(session_id, client_entry_id)` dla niepustego client ID;
+- unique mapowanie prywatnego `(owner_id, client_climb_id)` dla niepustego client ID;
+- `duration_minutes > 0`;
+- `total_moves > 0` dla wpisu ocenianego;
+- `executed_moves >= 0`; może przekraczać `total_moves`, ponieważ obejmuje powtórzone ruchy po odpadnięciu;
+- nieujemne cache’e sesji;
+- brak fizycznego cascade delete z katalogu do historii treningowej;
+- zgodność Area sesji z Area wspinaczek i ich opcjonalnych sektorów; backend ma ją walidować niezależnie od UI, a techniczny sposób dodatkowego zabezpieczenia w DDL pozostaje do zaprojektowania;
+- indeks `(user_id, session_date desc)`;
+- indeksy FK oraz indeksy pod zapytania po `climb_id`, `area_id` i zakresie dat.
+
+Walidacja relacji styl–wynik, aktywności słowników i nienakładających się okresów poziomu pozostaje również w domenie, ponieważ nie wszystkie te reguły są wygodne do wyrażenia prostym constraintem.
+
+## 6. Reprezentacja w warstwach aplikacji
+
+Ta sama informacja nie powinna być jednym współdzielonym obiektem w całej aplikacji.
+
+| Warstwa           | Reprezentacja                                 | Co zawiera                                                                |
+| ----------------- | --------------------------------------------- | ------------------------------------------------------------------------- |
+| HTTP input ------ | rekord request DTO -------------------------- | identyfikatory oraz fakty wprowadzone przez klienta; bez wyników obliczeń |
+| Application input | command/query criteria ---------------------- | dane potrzebne konkretnemu przypadkowi użycia, już niezależne od HTTP --- |
+| Domain ---------- | encje, value objects, typowane identyfikatory | reguły spójności i pełna semantyka modelu ------------------------------- |
+| Persistence ----- | `*JpaEntity` i repozytoria-adaptery --------- | mapowanie kolumn, relacji i optimistic locking -------------------------- |
+| Query/read model  | dedykowane projekcje DTO -------------------- | dokładny kształt potrzebny ekranowi, bez odtwarzania całego agregatu ---- |
+| HTTP output ----- | response DTO -------------------------------- | surowe wartości domenowe i snapshoty, bez encji JPA --------------------- |
+
+### 6.1. Dane przyjmowane dla sesji
+
+Ustalenie web z 2026-09-22: rejestrowana sesja pozostaje lokalnym szkicem frontendu do zakończenia; `Start` nie tworzy sesji w bazie backendu. Zapis przyjmuje całą ukończoną sesję. Przy obliczaniu każdego wpisu historia obejmuje wcześniejsze rekordy w bazie oraz wcześniejsze wpisy tej samej przesłanej sesji. Ewentualny podgląd obliczeń nie zapisuje szkicu do bazy. Szczegóły i propozycje niezawodności: [pierwszy etap web](../business/training.md).
+
+Klient przekazuje m.in.:
+
+- `clientSessionId`;
+- `sessionDate`, `timeZoneId`;
+- `areaId` albo szybki draft miejsca (`clientAreaId`, `locationName`), który backend rozwiązuje do `areaId`;
+- nazwę/cel sesji, czas i notatkę;
+- uporządkowaną listę wpisów.
+
+Nie przekazuje `userId`, cache’u summary ani dyscypliny głównej.
+
+### 6.2. Dane przyjmowane dla wpisu
+
+Klient przekazuje m.in.:
+
+- client ID i kolejność;
+- identyfikator katalogowy albo dane robocze wspinaczki;
+- `climbType`, wycenę, profil, rezultat i tryb OS/Flash/RP;
+- pełną oraz wykonaną liczbę ruchów;
+- jednoznaczną informację o wyniku;
+- opcjonalną notatkę.
+
+Klient nie przekazuje jako źródła prawdy punktów, indeksów, EDL base, mnożników, `MoveIntensity`, `ClassicLoad` ani `AdjustedLoad`.
+
+### 6.3. Model domenowy a model JPA
+
+Rekomendacja dla ClimbBetter:
+
+- domenowe `TrainingSession` i `TrainingEntry` pozostają czystymi klasami bez adnotacji HTTP;
+- persystencja ma osobne `TrainingSessionJpaEntity` i `TrainingEntryJpaEntity` albo bardzo wyraźnie izolowane mapowanie;
+- adapter repozytorium mapuje agregat do encji JPA i z powrotem;
+- query side może mapować SQL/JPA bezpośrednio do read DTO, gdy nie zmienia domeny;
+- obiekty wartości, np. `SessionDate`, `MoveCount`, `CalculationSnapshot`, nie przeciekają do JSON w przypadkowym kształcie.
+
+To rozdzielenie kosztuje kilka jawnych mapperów, ale chroni model obliczeniowy przed wymaganiami Hibernate i kształtem ekranów.
+
+## 7. Modele odczytowe nie są encjami domenowymi
+
+Dashboard, Calendar, Areas i Session Details potrzebują innych przekrojów tych samych danych. Nie tworzymy dla nich nowych encji tylko dlatego, że ekran ma osobny DTO.
+
+Przykładowe read modele:
+
+- `TrainingSessionDetailsView` — sesja, summary i wpisy w kolejności;
+- `TrainingSessionListItemView` — skrót sesji dla Board/feedu;
+- `CalendarDayView` — agregaty sesji według `sessionDate`;
+- `DashboardSummaryView` — przekrój użytkownika i zakresu dat;
+- `ClimbingStyleProfileView` — ogólny poziom i peak grade oraz najwyższe OS, Flash, Fast RP i RP Max z sample size, confidence i różnicami indeksów;
+- `AreaSummaryView` — miejsce z licznikami i statusem użytkownika.
+
+Read modele mogą zawierać pola wyprowadzone, np. charakter sesji `MIXED`, ale nie zapisujemy ich automatycznie jako nowe źródło prawdy.
+
+`ClimbingStyleProfileView` nie tworzy czterech konkurencyjnych poziomów używanych do wyceny loadu. `UserGradeReference` pozostaje jednym ogólnym poziomem na dyscyplinę. Profil zachowuje osobno `peakOsGrade`, `peakFlashGrade`, `peakFastRpGrade`, `peakRpGrade`, numer prób przy najlepszym RP oraz różnice `fastRpVsOsGap`, `maxRpVsOsGap` i `maxRpVsFastRpGap`. Dzięki temu ten sam sezon może pokazać dobry ogólny poziom, ale mały zysk z projektowania albo słabsze OS.
+
+## 8. Historia, edycja i archiwizacja
+
+- `Area`, `Sector`, `Climb` i pozycje słowników są dezaktywowane lub archiwizowane zamiast fizycznie usuwane.
+- `TrainingEntry` pozostaje czytelny dzięki snapshotowi nawet po archiwizacji powiązanego `Climb`.
+- Każda edycja starego wpisu wpływająca na obliczenie zapisuje pełny poprzedni i nowy snapshot, użytkownika, czas i typ/powód operacji.
+- Edycja przelicza edytowaną sesję, ale nie uruchamia automatycznej kaskady przez późniejsze sesje. Ich zapisane snapshoty pozostają historyczne.
+- Masowa reewaluacja po korekcie wyceny jest osobną, jawną operacją i również pozostawia `CalculationRevision`.
+- Zmiana słownika nigdy automatycznie nie uruchamia reewaluacji.
+
+## 9. Elementy świadomie poza modelem v1
+
+- globalny społecznościowy katalog wszystkich dróg;
+- komentarze, obserwowanie, feed znajomych i partnerzy;
+- pełny model celów, wyzwań i achievementów;
+- fizjologia, regeneracja, sen i samopoczucie jako czynniki automatycznie zmieniające load;
+- osobna baza odczytowa i event sourcing;
+- pełna ontologia geograficzna świata;
+- periodyzacja, makro-/mezo-/mikrocykle i planer; architektura pozostawia na nie osobny przyszły moduł bez pól v1 w sesji.

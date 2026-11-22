@@ -18,13 +18,17 @@ public final class TrainingMetricsFacade {
     private final SessionMetricsCalculator sessionMetricsCalculator =
             new SessionMetricsCalculator();
 
-    public CalculatedEntry calculateAssessed(
+    public CalculatedEntry calculateWarmUp(int executedMoves) {
+        return calculateWarmUp(executedMoves, "v2");
+    }
+
+    public CalculatedEntry calculateAssessedV2(
             String climbType,
             String resultType,
             String ascentMode,
             String protectionMode,
             BigDecimal gradePoints,
-            BigDecimal baseEdl,
+            EffortIntensityProfile intensityProfile,
             BigDecimal styleMultiplier,
             BigDecimal relativeEffortMultiplier,
             int totalMoves,
@@ -37,37 +41,75 @@ public final class TrainingMetricsFacade {
                 protectionMode
         );
 
-        MoveCount moveCount = new MoveCount(
-                totalMoves,
-                executedMoves
-        );
+        if ("ASCENT".equals(resultType) && executedMoves != totalMoves) {
+            throw new IllegalArgumentException(
+                    "Completed climbs require exactly " + totalMoves
+                            + " executed moves; use Attempt for a partial climb"
+            );
+        }
 
-        EntryMetrics metrics = assessedEntryCalculator.calculate(
+        EntryMetrics metrics = assessedEntryCalculator.calculateV2(
                 gradePoints,
-                baseEdl,
+                intensityProfile,
                 styleMultiplier,
                 relativeEffortMultiplier,
-                moveCount
+                new MoveCount(totalMoves, executedMoves)
         );
 
         return new CalculatedEntry(
                 executedMoves,
-                metrics.edlCount(),
                 metrics.moveIntensity(),
                 metrics.classicLoad(),
-                metrics.adjustedLoad()
+                metrics.adjustedLoad(),
+                "v2",
+                metrics.profileIntensityIndex(),
+                metrics.crux()
         );
     }
 
-    public CalculatedEntry calculateWarmUp(int executedMoves) {
+    public CalculatedEntry calculateWarmUp(
+            int executedMoves,
+            String modelVersion
+    ) {
+        if (modelVersion == null || modelVersion.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Calculation model version is required"
+            );
+        }
+
         WarmUpEntry warmUpEntry = new WarmUpEntry(executedMoves);
 
         return new CalculatedEntry(
                 executedMoves,
                 null,
-                null,
                 warmUpEntry.classicLoad(),
-                warmUpEntry.adjustedLoad()
+                warmUpEntry.adjustedLoad(),
+                modelVersion,
+                null,
+                null
+        );
+    }
+
+    /** V3 changes the level reference; the intensity and crux calculations remain those of v2. */
+    public CalculatedEntry calculateAssessedV3(
+            String climbType,
+            String resultType,
+            String ascentMode,
+            String protectionMode,
+            BigDecimal gradePoints,
+            EffortIntensityProfile intensityProfile,
+            BigDecimal styleMultiplier,
+            BigDecimal relativeEffortMultiplier,
+            int totalMoves,
+            int executedMoves
+    ) {
+        CalculatedEntry calculation = calculateAssessedV2(
+                climbType, resultType, ascentMode, protectionMode, gradePoints, intensityProfile,
+                styleMultiplier, relativeEffortMultiplier, totalMoves, executedMoves
+        );
+        return new CalculatedEntry(
+                calculation.executedMoves(), calculation.moveIntensity(), calculation.classicLoad(),
+                calculation.adjustedLoad(), "v3", calculation.profileIntensityIndex(), calculation.crux()
         );
     }
 
@@ -211,10 +253,12 @@ public final class TrainingMetricsFacade {
 
     public record CalculatedEntry(
             int executedMoves,
-            BigDecimal edlCount,
             BigDecimal moveIntensity,
             BigDecimal classicLoad,
-            BigDecimal adjustedLoad
+            BigDecimal adjustedLoad,
+            String calculationModelVersion,
+            BigDecimal profileIntensityIndex,
+            CruxMetrics crux
     ) {
     }
 

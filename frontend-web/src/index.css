@@ -2,6 +2,17 @@
   box-sizing: border-box;
 }
 
+.auth-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.auth-card { width: min(100%, 440px); display: grid; gap: 16px; }
+.auth-card h1, .auth-card p { margin: 0; }
+.auth-card form { display: grid; gap: 16px; }
+.auth-name { display: grid; gap: 8px; font-weight: 600; }
+.auth-name input { width: 100%; font: inherit; padding: 12px; border: 1px solid #98a2b3; border-radius: 8px; }
+.auth-google { width: 100%; }
+.auth-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.auth-test-note { color: #7a5200; background: #fff3cd; padding: 10px; border-radius: 8px; }
+.user-menu { display: flex; gap: 12px; align-items: center; }
+
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -421,6 +432,19 @@ h3 { font-size: 17px; }
 summary { cursor: pointer; color: #17695c; margin-top: 14px; }
 .calculation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; }
 .calculation-details dd { margin: 0; text-align: right; }
+.calculation-details dt { color: #627069; }
+.crux-split { margin-top: 16px; padding: 16px; border: 1px solid #dbe5d9; border-radius: 10px; background: #f5f8f2; }
+.crux-split h4 { margin: 0; font-size: 15px; }
+.crux-split > p { margin: 5px 0 12px; font-size: 13px; }
+.crux-split-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; text-align: left; }
+.crux-split-table th, .crux-split-table td { padding: 9px 5px; overflow-wrap: anywhere; }
+.crux-split-table thead th { color: #627069; font-size: 12px; font-weight: 600; border-bottom: 1px solid #dbe5d9; }
+.crux-split-table th:nth-child(1) { width: 24%; }
+.crux-split-table th:nth-child(2) { width: 20%; white-space: nowrap; }
+.crux-split-table th:nth-child(3) { width: 30%; }
+.crux-split-table td { font-variant-numeric: tabular-nums; }
+.model-note { margin: 18px 0 0; font-size: 13px; }
+.profile-description p { margin: 0 0 8px; font-size: 14px; }
 .notice { padding: 16px 20px; border: 1px solid #c5daca; background: #eef5ef; border-radius: 10px; }
 .notice.error { background: #fff1ed; border-color: #edc4b9; color: #862e23; }
 .error-text { color: #a93230; }
@@ -482,4 +506,177 @@ input[readonly] { background: #f4f6f2; }
   .sticky-actions { position: static; }
   .stats-grid strong, .session-meta strong { font-size: 18px; }
   .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Detailed statistics: reports spanning a period of climbing history. */
+.statistics-workspace { max-width: 1280px; }
+.statistics-reports { display: flex; gap: 24px; border-bottom: 1px solid #dce3dc; margin-bottom: 28px; }
+.statistics-reports a { padding: 0 0 12px; color: #17695c; border-bottom: 3px solid #17695c; font-weight: 700; }
+.statistics-report > .section-heading h2 { margin: 0; }
+.statistics-report > .section-heading { gap: 16px; flex-wrap: wrap; }
+.statistics-intro { max-width: 740px; margin: 14px 0 22px; }
+.statistics-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.statistics-filters label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; color: #52665d; min-width: 0; }
+.statistics-filters select { width: 100%; min-width: 0; border: 1px solid #ccd5d0; border-radius: 8px; padding: 10px 12px; background: #fbfcfa; color: #202c2a; font-weight: 500; }
+.statistics-period { margin: 18px 0; }
+.statistics-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 22px; align-items: start; }
+.statistics-metric { min-width: 0; }
+.statistics-metric > strong { display: block; font-size: 36px; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -1px; }
+.statistics-metric > p { margin-bottom: 0; }
+.statistics-assessment details { margin-top: 12px; }
+.statistics-assessment summary { font-size: 13px; }
+.pyramid-confidence { display: inline-block; border: 1px solid #c8ded0; color: #2d634f; background: #eff7f0; padding: 2px 8px; border-radius: 20px; margin-top: 10px; font-size: 12px; font-weight: 600; }
+.pyramid-confidence.low { border-color: #e4d7b9; background: #faf5e9; color: #745b2d; }
+.statistics-support { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; font-size: 13px; }
+.statistics-support dd { margin: 0; font-weight: 700; }
+.statistics-pyramid-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.statistics-chart-card, .statistics-climbs, .statistics-layer-placeholder { min-width: 0; }
+.statistics-chart-card .section-heading { gap: 10px; flex-wrap: wrap; }
+.statistics-chart-card .section-heading h3 { margin: 0; }
+.pyramid-layers { list-style: none; padding: 0; margin: 22px 0; display: grid; gap: 5px; }
+.pyramid-layers.is-points { --pyramid-label-width: 100px; }
+.pyramid-layer { display: grid; grid-template-columns: var(--pyramid-label-width, 44px) minmax(0, 1fr) var(--pyramid-count-width, 3ch); gap: 14px; width: 100%; min-height: 44px; border-color: transparent; padding: 7px 9px; background: transparent; border-radius: 8px; text-align: left; }
+.pyramid-layer.is-selected { border-color: #17695c; background: #eff5ef; }
+.pyramid-grade { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; max-width: 130px; }
+.pyramid-count { text-align: right; font-size: 14px; font-variant-numeric: tabular-nums; }
+.pyramid-bar-track { display: flex; justify-content: center; align-items: center; min-width: 0; }
+.pyramid-bar { display: block; width: var(--layer-width); height: 26px; background: #2c7c68; border-radius: 4px; }
+.pyramid-layer.is-selected .pyramid-bar { background: #125b49; }
+.pyramid-layer.is-empty .pyramid-bar-track { border-bottom: 1px dashed #cdd6cf; height: 1px; }
+.pyramid-layer.is-empty .pyramid-grade, .pyramid-layer.is-empty .pyramid-count { color: #66756d; font-weight: 500; }
+.pyramid-calibration { margin-top: 20px; }
+.statistics-chart-caption { border-top: 1px solid #e5eae4; padding-top: 14px; margin-bottom: 0; }
+.statistics-climbs h3 { margin-bottom: 0; overflow-wrap: anywhere; }
+.statistics-climbs .section-heading { align-items: start; gap: 8px; }
+.pyramid-climb-list { padding: 0; margin: 0; list-style: none; }
+.pyramid-climb-list li { padding: 15px 0; border-bottom: 1px solid #e5eae4; }
+.pyramid-climb-heading { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
+.pyramid-climb-heading a { overflow-wrap: anywhere; min-width: 0; }
+.pyramid-climb-grade { flex-shrink: 0; font-size: 14px; font-weight: 700; }
+.pyramid-climb-list p { margin: 4px 0 0; overflow-wrap: anywhere; }
+.pyramid-pagination { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.statistics-empty { padding: 30px; }
+
+/* Monthly and yearly training summaries. */
+.statistics-reports a { border-bottom-color: transparent; color: #627069; }
+.statistics-reports a[aria-current="page"] { color: #17695c; border-bottom-color: #17695c; }
+.period-summary-filters { display: grid; grid-template-columns: 1fr 1fr 1.4fr 1.7fr; gap: 18px; align-items: end; }
+.period-summary-filters label { min-width: 0; color: #52665d; font-size: 13px; }
+.period-summary-navigation { display: flex; align-items: center; gap: 16px; margin: 22px 0; flex-wrap: wrap; }
+.period-summary-navigation h3 { margin: 0; font-size: 23px; letter-spacing: -.4px; }
+.period-summary-navigation > span { margin-left: auto; font-size: 13px; }
+.period-step-buttons { display: flex; gap: 5px; }
+.period-step-buttons button { min-width: 40px; padding: 7px 11px; }
+.period-time-note { margin-bottom: 20px; font-size: 13px; line-height: 1.6; }
+.period-summary-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.period-summary-metric { min-width: 0; padding: 20px 22px; }
+.period-summary-metric > strong { display: block; margin-top: 8px; font-size: 33px; line-height: 1.2; letter-spacing: -.9px; font-variant-numeric: tabular-nums; }
+.period-summary-metric > p { margin: 9px 0 0; font-size: 12px; }
+.period-summary-metric[aria-label="Adjusted Load"] { background: #eff7f0; border-color: #c9ddcd; }
+.period-summary-empty { margin-bottom: 22px; }
+.period-summary-empty h3 { margin-top: 0; }
+.period-summary-chart { min-width: 0; padding: 24px; margin-bottom: 24px; }
+.period-summary-chart h3, .period-breakdown-card h3, .period-highlight-card h3 { margin: 3px 0 0; }
+.period-summary-chart .section-heading { gap: 12px; flex-wrap: wrap; }
+.period-summary-chart .section-heading > span { font-size: 12px; }
+.period-chart-hint { font-size: 13px; margin: 9px 0 12px; }
+.period-chart-axis-labels { display: flex; justify-content: space-between; padding: 0 8px; color: #627069; font-size: 11px; }
+.period-chart-canvas { width: 100%; min-width: 0; }
+.period-chart-canvas .recharts-surface { cursor: pointer; }
+.period-chart-settings { border-top: 1px solid #e5eae4; margin-top: 16px; padding-top: 2px; }
+.period-chart-settings > summary { font-size: 13px; font-weight: 700; }
+.period-chart-controls { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 3fr); gap: 26px; margin-top: 18px; }
+.period-chart-controls > label { align-self: start; font-size: 13px; }
+.period-chart-controls fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+.period-chart-controls legend { padding: 0; margin-bottom: 12px; color: #52665d; font-size: 13px; font-weight: 700; }
+.period-line-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px 18px; }
+.period-line-options label { font-size: 12px; gap: 7px; font-weight: 500; }
+.period-line-options input { margin: 0; accent-color: #17695c; }
+.period-line-options label:has(input:disabled) { opacity: .55; }
+.period-series-color { display: inline-block; width: 9px; height: 9px; flex-shrink: 0; border-radius: 50%; }
+.period-metric-note { font-size: 12px; line-height: 1.6; margin-bottom: 0; }
+.period-chart-data { border-top: 1px solid #e5eae4; margin-top: 18px; }
+.period-chart-data summary { font-size: 13px; }
+.period-table-scroll { overflow-x: auto; margin-top: 14px; }
+.period-table-scroll table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: right; }
+.period-table-scroll td, .period-table-scroll th { padding: 9px; border-bottom: 1px solid #e5eae4; font-variant-numeric: tabular-nums; }
+.period-table-scroll th:first-child { text-align: left; white-space: nowrap; }
+.period-table-scroll thead th { color: #627069; font-weight: 600; }
+.period-table-scroll .text-link { border: 0; padding: 0; background: transparent; font: inherit; }
+.period-selected-sessions { margin-bottom: 24px; }
+.period-selected-sessions h3 { margin: 0; }
+.period-session-list { list-style: none; padding: 0; margin-bottom: 0; }
+.period-session-list li { display: flex; gap: 20px; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #e5eae4; }
+.period-session-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.period-session-list p { margin: 6px 0 0; font-size: 12px; }
+.period-session-load { flex-shrink: 0; text-align: right; }
+.period-session-load strong { display: block; font-size: 19px; font-variant-numeric: tabular-nums; }
+.period-session-load span { color: #627069; font-size: 11px; }
+.period-highlights { margin-bottom: 24px; }
+.period-highlights > .section-heading h3 { margin: 0; }
+.period-highlights > .section-heading { margin-bottom: 16px; }
+.period-highlights-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.period-highlight-card { min-width: 0; }
+.period-highlight-card .text-link { overflow-wrap: anywhere; }
+.period-highlight-card > p.muted { font-size: 12px; margin: 6px 0; }
+.period-highlight-value { display: block; font-size: 31px; font-variant-numeric: tabular-nums; margin: 15px 0 8px; letter-spacing: -.7px; }
+.period-highlight-detail { color: #52665d; font-size: 13px; margin: 14px 0 0; }
+.period-hardest-ascent { display: flex; gap: 14px; align-items: center; margin: 14px 0 8px; }
+.period-hardest-ascent > strong { font-size: 31px; letter-spacing: -.7px; }
+.period-style-badge { display: inline-block; border-radius: 20px; background: #eaf3ed; color: #17695c; padding: 4px 9px; font-size: 12px; font-weight: 700; }
+.period-style-bests { margin: 17px 0 0; border-top: 1px solid #e5eae4; padding-top: 8px; }
+.period-style-bests > div { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 12px; margin-top: 10px; font-size: 12px; }
+.period-style-bests dt { color: #627069; }
+.period-style-bests dd { margin: 0; }
+.period-breakdown-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.period-breakdown-card { min-width: 0; }
+.period-ring-layout { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 1fr); gap: 16px; align-items: center; margin-top: 12px; }
+.period-ring-graphic { position: relative; height: 190px; min-width: 0; }
+.period-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
+.period-ring-center strong { font-size: 25px; font-variant-numeric: tabular-nums; }
+.period-ring-center span { color: #627069; font-size: 11px; margin-top: 3px; }
+.period-ring-empty { position: absolute; width: 172px; height: 172px; top: 9px; left: 50%; transform: translateX(-50%); border: 24px solid #e9eee8; border-radius: 50%; }
+.period-ring-legend { list-style: none; margin: 0; padding: 0; }
+.period-ring-legend li { display: flex; gap: 9px; align-items: start; padding: 9px 0; }
+.period-ring-legend li > span { margin-top: 4px; }
+.period-ring-legend li div { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: 13px; }
+.period-ring-legend strong { font-variant-numeric: tabular-nums; font-size: 15px; }
+.period-ring-legend small { color: #627069; font-weight: 400; font-size: 12px; margin-left: 5px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 900px) {
+  .period-summary-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .period-ring-layout { grid-template-columns: 1fr; gap: 0; }
+  .period-ring-legend { display: flex; justify-content: space-around; flex-wrap: wrap; column-gap: 12px; }
+}
+@media (max-width: 700px) {
+  .period-summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .period-summary-metric { padding: 17px 14px; }
+  .period-summary-metric > strong { font-size: 27px; }
+  .period-summary-metric > .eyebrow { font-size: 10px; }
+  .period-summary-metric > p { font-size: 11px; }
+  .period-summary-navigation { gap: 12px; }
+  .period-summary-navigation h3 { font-size: 20px; }
+  .period-summary-navigation > span { width: 100%; margin-left: 0; }
+  .period-summary-chart { padding: 18px 12px; }
+  .period-summary-chart h3 { font-size: 17px; }
+  .period-chart-controls { grid-template-columns: 1fr; gap: 20px; }
+  .period-line-options { gap: 13px 10px; }
+  .period-line-options label { font-size: 11px; }
+  .period-highlights-grid, .period-breakdown-grid { grid-template-columns: minmax(0, 1fr); }
+  .period-ring-layout { grid-template-columns: minmax(150px, 1fr) minmax(0, 1fr); gap: 10px; }
+  .period-ring-legend { display: block; }
+  .period-session-list li { align-items: start; }
+  .period-session-load strong { font-size: 16px; }
+}
+@media (max-width: 900px) {
+  .statistics-pyramid-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .statistics-filters, .statistics-summary { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .statistics-metric { padding: 16px 20px; }
+  .statistics-metric > strong { font-size: 30px; }
+  .statistics-chart-card { padding: 16px 12px; }
+  .pyramid-layer { gap: 9px; padding: 7px 5px; }
+  .pyramid-grade { max-width: 110px; }
+  .main-nav { flex-wrap: wrap; gap: 12px 18px; }
 }

@@ -12,8 +12,10 @@ class LocalWebConfiguration implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/v1/**")
-                .allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+                .allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173",
+                        "http://localhost:5174", "http://127.0.0.1:5174",
+                        "http://localhost:5175", "http://127.0.0.1:5175")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("Content-Type");
+                .allowedHeaders("Content-Type", "Authorization");
     }
 }

@@ -1,27 +1,43 @@
 package pl.climbbetter.identity.internal;
 
-import org.springframework.jdbc.core.simple.JdbcClient;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import pl.climbbetter.identity.CurrentUserProvider;
-
-import java.util.UUID;
 
 @RestController
 class CurrentUserController {
     private final CurrentUserProvider currentUserProvider;
-    private final JdbcClient jdbcClient;
+    private final IdentityAccountService accounts;
 
-    CurrentUserController(CurrentUserProvider currentUserProvider, JdbcClient jdbcClient) {
+    CurrentUserController(CurrentUserProvider currentUserProvider, IdentityAccountService accounts) {
         this.currentUserProvider = currentUserProvider;
-        this.jdbcClient = jdbcClient;
+        this.accounts = accounts;
     }
 
     @GetMapping("/api/v1/identity/me")
-    CurrentUserResponse currentUser() {
-        return jdbcClient.sql("SELECT id AS user_id, display_name FROM identity.users WHERE id = :id")
-                .param("id", currentUserProvider.currentUserId()).query(CurrentUserResponse.class).single();
+    AccountProfile currentUser() {
+        return accounts.get(currentUserProvider.currentUserId());
     }
 
-    record CurrentUserResponse(UUID userId, String displayName) { }
+    @PostMapping("/api/v1/identity/bootstrap")
+    AccountProfile bootstrap(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof IdentityPrincipal principal)) {
+            throw new IdentityAccessException(401, "AUTH_REQUIRED", "Please sign in.");
+        }
+        return accounts.bootstrap(principal.identity());
+    }
+
+    @PutMapping("/api/v1/identity/me")
+    AccountProfile update(@Valid @RequestBody ProfileRequest request) {
+        return accounts.update(currentUserProvider.currentUserId(), request.displayName());
+    }
+
+    record ProfileRequest(@NotBlank @Size(max = 80) String displayName) { }
 }

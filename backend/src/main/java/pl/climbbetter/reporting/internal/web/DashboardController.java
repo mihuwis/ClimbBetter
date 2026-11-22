@@ -9,6 +9,11 @@ import pl.climbbetter.reporting.DashboardSessionSummary;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import pl.climbbetter.reporting.DashboardSessionsPage;
 
 
 @RestController 
@@ -23,6 +28,19 @@ class DashboardController {
     @GetMapping("/sessions")
     List<DashboardSessionSummary> findRecentSessions(){
         return dashboardQuery.findRecentSessions();
+    }
+
+    @GetMapping("/sessions/page")
+    DashboardSessionsPage findSessionsPage(@RequestParam(defaultValue = "20") int limit,
+                                         @RequestParam(required = false) String cursor) {
+        return dashboardQuery.findSessionsPage(limit, cursor);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    ProblemDetail invalidPagination(IllegalArgumentException exception) {
+        var problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+        problem.setProperty("code", "INVALID_PAGINATION");
+        return problem;
     }
 
     @GetMapping("/personal-bests")

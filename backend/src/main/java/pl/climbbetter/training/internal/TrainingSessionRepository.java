@@ -1,17 +1,22 @@
 package pl.climbbetter.training.internal;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import pl.climbbetter.training.AchievementEligibility;
 import pl.climbbetter.training.TrainingEntryCommand;
 import pl.climbbetter.training.TrainingSessionDetails;
 import pl.climbbetter.training.TrainingSessionSummary;
 import pl.climbbetter.training.TrainingSessionDetails.CalculationDetails;
+import pl.climbbetter.training.TrainingSessionDetails.CruxDetails;
+import pl.climbbetter.training.internal.model.CruxMetrics;
 import pl.climbbetter.training.TrainingSessionDetails.EntryDetails;
 import pl.climbbetter.training.TrainingSessionDetails.HistoryDetails;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedEntry;
 import pl.climbbetter.training.internal.model.TrainingMetricsFacade.CalculatedSession;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -28,6 +33,24 @@ class TrainingSessionRepository {
 
     TrainingSessionRepository(JdbcClient jdbcClient) {
         this.jdbcClient = jdbcClient;
+    }
+
+    private int executeSessionWrite(JdbcClient.StatementSpec statement) {
+        try {
+            return statement.update();
+        } catch (DataIntegrityViolationException exception) {
+            if (exception.getMostSpecificCause() instanceof SQLException sqlException
+                    && "23P01".equals(sqlException.getSQLState())) {
+                throw new TrainingSessionTimeConflictException(exception);
+            }
+            throw exception;
+        }
+    }
+
+    void lockUserTimeline(UUID userId) {
+        jdbcClient.sql("SELECT pg_advisory_xact_lock(hashtextextended(:timeline, 0))")
+                .param("timeline", "training-session:" + userId)
+                .query((row, number) -> 0).single();
     }
 
     Optional<ExistingSession> findByClientSessionId(
@@ -68,8 +91,16 @@ class TrainingSessionRepository {
                         SELECT id AS session_id, session_name, session_date,
                                location_name_snapshot AS area_name, duration_minutes,
                                total_moves, classic_load, adjusted_load, average_move_intensity,
-                               max_boulder_grade, max_route_grade
-                        FROM training.training_sessions
+                               maxima.max_boulder_grade, maxima.max_route_grade,
+                               COALESCE((
+                                   SELECT CASE WHEN COUNT(DISTINCT entry.calculation_model_version) > 1
+                                       THEN 'mixed' ELSE MIN(entry.calculation_model_version) END
+                                   FROM training.training_entries entry
+                                   WHERE entry.session_id = session.id
+                               ), 'v1') AS calculation_model_version
+                        FROM training.training_sessions session
+                        JOIN reporting.session_achievement_maxima maxima
+                          ON maxima.session_id = session.id
                         WHERE user_id = :userId AND deleted_at IS NULL
                           AND session_date BETWEEN :fromDate AND :toDate
                         ORDER BY session_date DESC, started_at DESC, id
@@ -81,7 +112,7 @@ class TrainingSessionRepository {
     void insertSession(SessionRow session) {
         Objects.requireNonNull(session, "Session is required");
 
-        int insertedRows = jdbcClient.sql("""
+        int insertedRows = executeSessionWrite(jdbcClient.sql("""
                         INSERT INTO training.training_sessions (
                             id,
                             client_session_id,
@@ -174,8 +205,7 @@ class TrainingSessionRepository {
                 .param(
                         "createdAt",
                         databaseTimestamp(session.createdAt())
-                )
-                .update();
+                ));
 
         if (insertedRows != 1) {
             throw new IllegalStateException(
@@ -191,6 +221,7 @@ class TrainingSessionRepository {
             int entryOrder,
             int executedMoves,
             String notes,
+            String calculationModelVersion,
             Instant createdAt
     ) {
         int insertedRows = jdbcClient.sql("""
@@ -216,7 +247,7 @@ class TrainingSessionRepository {
                             :executedMoves,
                             0,
                             0,
-                            'v1',
+                            :calculationModelVersion,
                             :notes,
                             :createdAt
                         )
@@ -227,6 +258,7 @@ class TrainingSessionRepository {
                 .param("entryOrder", entryOrder)
                 .param("executedMoves", executedMoves)
                 .param("notes", notes)
+                .param("calculationModelVersion", calculationModelVersion)
                 .param(
                         "createdAt",
                         databaseTimestamp(createdAt)
@@ -256,6 +288,8 @@ class TrainingSessionRepository {
             CalculatedEntry calculation,
             Instant createdAt
     ) {
+        CruxMetrics crux = calculation.crux();
+        boolean usesContinuousReference = "v3".equals(calculation.calculationModelVersion());
         int insertedRows = jdbcClient.sql("""
                         INSERT INTO training.training_entries (
                             id,
@@ -277,10 +311,16 @@ class TrainingSessionRepository {
                             effort_profile_id,
                             effort_profile_code,
                             effort_profile_name_snapshot,
-                            base_edl,
+                            profile_intensity_index,
+                            hard_move_count,
+                            easy_move_count,
+                            hard_move_intensity,
+                            easy_move_intensity,
+                            base_move_grade_label,
+                            hard_move_grade_label,
+                            easy_move_grade_label,
                             total_moves,
                             executed_moves,
-                            edl_count,
                             move_intensity,
                             style_multiplier,
                             relative_effort_multiplier,
@@ -294,6 +334,13 @@ class TrainingSessionRepository {
                             current_level_grade_label,
                             current_level_index,
                             relative_grade_diff,
+                            effective_current_level_index,
+                            effective_relative_grade_diff,
+                            level_reference_source,
+                            level_reference_algorithm_version,
+                            level_reference_horizon_days,
+                            level_reference_sample_size,
+                            level_reference_history_weight,
                             outside_calibrated_range,
                             familiarity_source,
                             history_conflict_detected,
@@ -321,16 +368,22 @@ class TrainingSessionRepository {
                             :effortProfileId,
                             :effortProfileCode,
                             :effortProfileName,
-                            :baseEdl,
+                            :profileIntensityIndex,
+                            :hardMoveCount,
+                            :easyMoveCount,
+                            :hardMoveIntensity,
+                            :easyMoveIntensity,
+                            :baseMoveGradeLabel,
+                            :hardMoveGradeLabel,
+                            :easyMoveGradeLabel,
                             :totalMoves,
                             :executedMoves,
-                            :edlCount,
                             :moveIntensity,
                             :styleMultiplier,
                             :relativeEffortMultiplier,
                             :classicLoad,
                             :adjustedLoad,
-                            'v1',
+                            :calculationModelVersion,
                             :contactsTwoYears,
                             :attemptOrdinal,
                             :familiarityBand,
@@ -338,6 +391,13 @@ class TrainingSessionRepository {
                             :currentLevelGradeLabel,
                             :currentLevelIndex,
                             :relativeGradeDifference,
+                            :effectiveCurrentLevelIndex,
+                            :effectiveRelativeGradeDifference,
+                            :levelReferenceSource,
+                            :levelEstimatorVersion,
+                            :levelReferenceHorizonDays,
+                            :levelReferenceSampleSize,
+                            :levelReferenceHistoryWeight,
                             :outsideCalibratedRange,
                             :familiaritySource,
                             :historyConflictDetected,
@@ -386,13 +446,20 @@ class TrainingSessionRepository {
                         "effortProfileName",
                         effortProfile.displayName()
                 )
-                .param("baseEdl", effortProfile.baseEdl())
+                .param("calculationModelVersion", calculation.calculationModelVersion())
+                .param("profileIntensityIndex", calculation.profileIntensityIndex())
+                .param("hardMoveCount", crux == null ? null : crux.hardMoveCount())
+                .param("easyMoveCount", crux == null ? null : crux.easyMoveCount())
+                .param("hardMoveIntensity", crux == null ? null : crux.hardMoveIntensity())
+                .param("easyMoveIntensity", crux == null ? null : crux.easyMoveIntensity())
+                .param("baseMoveGradeLabel", crux == null ? null : crux.baseMoveGradeLabel())
+                .param("hardMoveGradeLabel", crux == null ? null : crux.hardMoveGradeLabel())
+                .param("easyMoveGradeLabel", crux == null ? null : crux.easyMoveGradeLabel())
                 .param("totalMoves", entry.totalMoves())
                 .param(
                         "executedMoves",
                         entry.executedMoves()
                 )
-                .param("edlCount", calculation.edlCount())
                 .param(
                         "moveIntensity",
                         calculation.moveIntensity()
@@ -435,6 +502,14 @@ class TrainingSessionRepository {
                         "relativeGradeDifference",
                         relativeEffort.relativeGradeDifference()
                 )
+                .param("effectiveCurrentLevelIndex", usesContinuousReference ? level.effectiveGradeIndex() : null)
+                .param("effectiveRelativeGradeDifference", usesContinuousReference
+                        ? BigDecimal.valueOf(grade.gradeIndex()).subtract(level.effectiveGradeIndex()) : null)
+                .param("levelReferenceSource", usesContinuousReference ? level.source() : null)
+                .param("levelEstimatorVersion", usesContinuousReference ? level.estimatorVersion() : null)
+                .param("levelReferenceHorizonDays", usesContinuousReference ? level.horizonDays() : null)
+                .param("levelReferenceSampleSize", usesContinuousReference ? level.sampleSize() : null)
+                .param("levelReferenceHistoryWeight", usesContinuousReference ? level.historyWeight() : null)
                 .param(
                         "outsideCalibratedRange",
                         relativeEffort.outsideCalibratedRange()
@@ -533,10 +608,12 @@ class TrainingSessionRepository {
                             classic_load,
                             adjusted_load,
                             average_move_intensity,
-                            max_boulder_grade,
-                            max_route_grade
-                        FROM training.training_sessions
-                        WHERE id = :sessionId
+                            maxima.max_boulder_grade,
+                            maxima.max_route_grade
+                        FROM training.training_sessions session
+                        JOIN reporting.session_achievement_maxima maxima
+                          ON maxima.session_id = session.id
+                        WHERE session.id = :sessionId
                           AND user_id = :userId
                           AND deleted_at IS NULL
                         """)
@@ -613,6 +690,17 @@ class TrainingSessionRepository {
                             entry.executed_moves,
                             entry.notes,
                             entry.edl_count,
+                            entry.grade_points,
+                            entry.base_edl,
+                            entry.grade_calibration_version,
+                            entry.profile_intensity_index,
+                            entry.hard_move_count,
+                            entry.easy_move_count,
+                            entry.hard_move_intensity,
+                            entry.easy_move_intensity,
+                            entry.base_move_grade_label,
+                            entry.hard_move_grade_label,
+                            entry.easy_move_grade_label,
                             entry.move_intensity,
                             entry.style_multiplier,
                             entry.relative_effort_multiplier,
@@ -621,6 +709,13 @@ class TrainingSessionRepository {
                             entry.current_level_grade_label,
                             entry.current_level_index,
                             entry.relative_grade_diff,
+                            entry.effective_current_level_index,
+                            entry.effective_relative_grade_diff,
+                            entry.level_reference_source,
+                            entry.level_reference_algorithm_version,
+                            entry.level_reference_horizon_days,
+                            entry.level_reference_sample_size,
+                            entry.level_reference_history_weight,
                             entry.outside_calibrated_range,
                             entry.calculation_model_version,
                             entry.contact_count_before_two_years,
@@ -660,7 +755,11 @@ class TrainingSessionRepository {
                                     resultSet.getString(
                                             "familiarity_source"
                                     ),
-                                    nullableBoolean(resultSet, "fast_rp"),
+                                    AchievementEligibility.isEligible(
+                                            resultType,
+                                            resultSet.getString("climb_type"),
+                                            resultSet.getString("protection_mode")
+                                    ) ? nullableBoolean(resultSet, "fast_rp") : false,
                                     nullableBoolean(
                                             resultSet,
                                             "history_conflict_detected"
@@ -702,7 +801,28 @@ class TrainingSessionRepository {
                                     ),
                                     resultSet.getString(
                                             "calculation_model_version"
-                                    )
+                                    ),
+                                    resultSet.getBigDecimal("grade_points"),
+                                    resultSet.getBigDecimal("base_edl"),
+                                    nullableInteger(resultSet, "grade_calibration_version"),
+                                    resultSet.getBigDecimal("profile_intensity_index"),
+                                    nullableInteger(resultSet, "hard_move_count") == null ? null
+                                            : new CruxDetails(
+                                                    resultSet.getInt("hard_move_count"),
+                                                    resultSet.getInt("easy_move_count"),
+                                                    resultSet.getBigDecimal("hard_move_intensity"),
+                                                    resultSet.getBigDecimal("easy_move_intensity"),
+                                                    resultSet.getString("base_move_grade_label"),
+                                                    resultSet.getString("hard_move_grade_label"),
+                                                    resultSet.getString("easy_move_grade_label")
+                                            ),
+                                    resultSet.getBigDecimal("effective_current_level_index"),
+                                    resultSet.getBigDecimal("effective_relative_grade_diff"),
+                                    resultSet.getString("level_reference_source"),
+                                    resultSet.getString("level_reference_algorithm_version"),
+                                    nullableInteger(resultSet, "level_reference_horizon_days"),
+                                    nullableInteger(resultSet, "level_reference_sample_size"),
+                                    resultSet.getBigDecimal("level_reference_history_weight")
                             );
 
                     return new EntryDetails(
@@ -777,6 +897,11 @@ class TrainingSessionRepository {
     ) {
 
         TrainingSessionDetails toDetails(List<EntryDetails> entries) {
+            List<String> versions = entries.stream()
+                    .map(entry -> entry.calculation().calculationModelVersion())
+                    .distinct().toList();
+            String modelVersion = versions.isEmpty() ? "v1"
+                    : versions.size() == 1 ? versions.getFirst() : "mixed";
             return new TrainingSessionDetails(
                     sessionId,
                     clientSessionId,
@@ -795,7 +920,8 @@ class TrainingSessionRepository {
                     averageMoveIntensity,
                     maxBoulderGrade,
                     maxRouteGrade,
-                    entries
+                    entries,
+                    modelVersion
             );
         }
     }
@@ -846,7 +972,7 @@ class TrainingSessionRepository {
     }
 
     void updateSessionHeader(SessionRow session) {
-        jdbcClient.sql("""
+        executeSessionWrite(jdbcClient.sql("""
                         UPDATE training.training_sessions
                         SET area_id = :areaId,
                             session_name = :sessionName,
@@ -870,8 +996,7 @@ class TrainingSessionRepository {
                 .param("startedAt", databaseTimestamp(session.startedAt()))
                 .param("endedAt", databaseTimestamp(session.endedAt()))
                 .param("locationName", session.locationName())
-                .param("requestFingerprint", session.requestFingerprint())
-                .update();
+                .param("requestFingerprint", session.requestFingerprint()));
     }
 
     void insertRevision(

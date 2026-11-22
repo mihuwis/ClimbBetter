@@ -1,56 +1,13 @@
 # Produkt ClimbBetter
 
-Status: ustalony kierunek produktu i zakres pierwszego etapu; 2026-10-03.
+Aktualizacja: 2026-11-09. Kierunek produktu i zakres potwierdzony w kodzie; decyzje w [rejestrze](../documentation/decisions.md).
 
-## Cel i odbiorcy
+ClimbBetter służy do zapisu treningów na ścianie i w skałach, analizy obciążenia i obserwacji postępów. Pierwszy klient to web, zastępujący prowadzenie historii w Excelu.
 
-ClimbBetter pomaga wspinaczowi rejestrować sesje na ścianie i w skałach, rozumieć wykonane obciążenie oraz obserwować postęp. Docelowo wspiera planowanie i propozycje treningów. Odbiorcą pierwszej wersji jest osoba prowadząca własną historię wspinania, obecnie także w Excelu.
+Obecny zakres: logowanie Google, nazwa profilu, zapis i korekty sesji, odzyskiwalny szkic, Dashboard, Calendar, katalog oraz Statistics. Adjusted Load jest główną metryką, Classic Load porównawczą. Piramida pokazuje osiągnięcia, a podsumowanie miesiąca/roku — wykonaną pracę.
 
-Pierwszy użyteczny rezultat: użytkownik zapisuje prawdziwy trening w webie i po ponownym otwarciu aplikacji widzi jego historię oraz wyniki policzone przez Javę. Sam formularz na mockach nie spełnia celu.
+**Jedna sesja obejmuje jeden rejon albo jedną ściankę.** Może zawierać wiele sektorów i wspinaczek tego miejsca. Inne miejsce oznacza osobną sesję, także tego samego dnia (DEC-018).
 
-## Jak wyjaśniamy sesję użytkownikowi
+Warunek użyteczności: próba i późniejsze przejście tej samej wspinaczki zapisują się trwale, wcześniejszy kontakt wpływa na obliczenie, retry nie dubluje danych, a wyniki po ponownym otwarciu pochodzą z backendu.
 
-Zasada biznesowa zatwierdzona 2026-10-03 (DEC-018): **jedna sesja dotyczy jednego rejonu wspinaczkowego albo jednej ścianki**. Uwzględniamy ją w objaśnieniach formularza, materiałach wprowadzających i dokumentacji dla użytkowników.
-
-Proponowane objaśnienie:
-
-> W jednej sesji zapisujesz wspinanie w jednym rejonie lub na jednej ściance. Możesz dodawać różne drogi, baldy i sektory w tym miejscu. Jeśli przenosisz się do innego rejonu lub na inną ściankę, zapisz tam osobną sesję — nawet tego samego dnia.
-
-Przejście do innego sektora tego samego rejonu nie wymaga nowej sesji. Dzięki temu miejsce i podsumowanie sesji mają dla użytkownika jednoznaczne znaczenie. Szczegóły reguły: [domain](domain.md).
-
-## Obszary produktu
-
-| Obszar              | Rola                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Dashboard --------- | ostatnie sesje i czytelne podsumowania; wejście do dodawania treningu --------------------- |
-| Training / Calendar | rejestrowanie, historia, szczegóły sesji; dalej widoki dnia, tygodnia i cyklu ------------- |
-| Areas / Catalog --- | własne miejsca, sektory, drogi, podpowiedzi z historii i szybkie dodanie brakujących danych |
-| Analytics --------- | ruchy, Classic Load, główny Adjusted Load, poziom i profil stylów ------------------------- |
-| Mobile ------------ | szybkie logowanie w terenie; docelowo trwałość lokalna i synchronizacja offline ----------- |
-| Planning ---------- | przyszłe plany, cykle i generowanie propozycji treningowych ------------------------------- |
-
-## Bieżący etap: web i Java
-
-Ustalenie z 2026-09-22, potwierdzone priorytetem użytkownika 2026-10-03: zaczynamy od `Record session` w webie i odtworzenia backendu Java zgodnego z Dashboardem i Session Details.
-
-- Wejście: Dashboard → `+ Add session` → wybór intencji → `Record session`.
-- Sesja i nowe wpisy pozostają lokalnym szkicem do `Finish session`; `Start` nie zapisuje rekordu na serwerze.
-- Backend waliduje i zapisuje ukończony trening atomowo, z kolejnością wpisów i snapshotami.
-- Dashboard prezentuje `Adjusted Load`, ruchy i najwyższe ukończone wyceny osobno dla skal.
-- Szczegóły grupują próby według tożsamości wspinaczki, zachowując chronologię i historyczne parametry każdej próby.
-
-Szczegółowy przepływ: [training](training.md). Wymagania ekranów: [frontend-web](../documentation/frontend-web.md). Kontrakt do dopracowania: [api](../documentation/api.md).
-
-## Granice pierwszego etapu
-
-`Add finished session` i `Add single climb` są przewidzianymi intencjami; ich szczegóły nie są jeszcze zatwierdzone. Nie powstają trzy osobne modele treningu. Pełny katalog, upload zdjęć, przebudowa wszystkich sekcji Dashboardu, cele i społeczność nie są warunkiem pierwszego przepływu.
-
-Szersze MVP ze starszych planów obejmuje Calendar, Areas i podstawową analitykę. Nie utożsamiamy go z pierwszym użytecznym przyrostem webowym ani nie przypisujemy mu terminu przed ustaleniem zakresu.
-
-Mobile offline-first pozostaje kierunkiem, ale nie wyprzedza obecnie webu. Społeczność, komentarze, partnerzy i globalny katalog są późniejszymi możliwościami, nie rdzeniem MVP.
-
-## Warunek sukcesu
-
-Sesja zawierająca nieudaną próbę i następnie przejście tej samej drogi zapisuje się trwale bez duplikacji. Wyniki na Dashboardzie i w szczegółach pochodzą z backendu; historia wcześniejszej próby wpływa na kolejną. Wymagania odporności szkicu oraz szczegóły kontraktu domykamy przed implementacją odpowiednich części.
-
-Źródła: [pierwszy etap web](../archive/source-snapshot/docs/CB_web_stage_1.md), [plan produktu](../archive/source-snapshot/app-plan.md), [wcześniejsze cele](../archive/source-snapshot/docs/old-doc/project_goals_02.md). Starsze kolejności prac są historyczne.
+Najbliższy cel to płatne utrzymanie produkcji dla 5–10 zaproszonych osób; [warunki wydania](../documentation/Environments_plan.md). Planowanie treningów, ankieta wspinaczkowa, płatności, media i społeczność są dalszym rozwojem. Flutter pozostaje prototypem; offline i synchronizacja wymagają implementacji.

@@ -1,47 +1,35 @@
-# UML: sekwencja końcowego zapisu
+# Sekwencja zapisu sesji
 
-Data: 2026-10-03. Projekt logiczny; endpointy, nazwy klas i dokładny mechanizm współbieżności nie zostały jeszcze wdrożone ani zamrożone. OPEN-12 określi, jak chronimy historię podczas transakcji.
+Aktualizacja: 2026-11-09. Wdrożony POST; pełna ochrona kolejności różnych równoległych sesji pozostaje w OPEN-12.
 
 ```mermaid
 sequenceDiagram
-    actor User as Uzytkownik
-    participant Web as Web / lokalny szkic
-    participant API as Java API
-    participant App as Przypadek uzycia zapisu
-    participant Calc as Kalkulator domenowy
-    participant DB as PostgreSQL
-    User->>Web: Finish session
-    Web->>API: Ukonczona sesja + client ID + uporzadkowane wpisy
-    API->>App: Fakty i tozsamosc uzytkownika
-    App->>DB: Sprawdz idempotencje i odczytaj historie
-    alt Identyczne zadanie juz zapisane
-        DB-->>App: Istniejaca sesja i wynik
-        App-->>API: Poprzedni wynik bez ponownego doliczenia prob
-    else Nowa sesja
-        Note over App,DB: Jedna transakcja; polityka ochrony historii do ustalenia
-        App->>DB: Rozwiaz katalog, client ID i poziom odniesienia
-        loop Kazdy wpis wedlug entryOrder
-            App->>Calc: Fakty + wczesniejsza historia + wczesniejsze wpisy szkicu
-            Calc-->>App: Wynik, snapshot lub blad
+    participant W as React / szkic
+    participant I as Security + identity
+    participant F as Firebase Admin
+    participant T as TrainingSessionService
+    participant C as Kalkulatory v3
+    participant D as PostgreSQL
+    W->>I: POST sesji + client IDs + Bearer
+    I->>F: Zweryfikuj token i stan konta
+    F-->>I: Poprawna tożsamość albo błąd
+    I->>D: Rozpoznaj UUID i ukończenie profilu
+    I->>T: Komenda dla bieżącego UUID
+    T->>D: Sprawdź clientSessionId i fingerprint
+    alt Identyczny zapis istnieje
+        D-->>T: Zapisany wynik
+    else Nowa komenda
+        Note over T,D: Jedna transakcja, błąd oznacza rollback
+        T->>D: Rozwiąż katalog, historię i poziom v3
+        loop Wpisy według entryOrder
+            T->>C: Fakty, wcześniejsze kontakty i reguły
+            C-->>T: Wyniki i snapshot
         end
-        alt Dane poprawne
-            App->>DB: Utrwal katalog, sesje, wpisy, snapshoty i summary
-            DB-->>App: Commit
-            App-->>API: Zapisana sesja i mapowanie ID
-        else Konflikt lub bledny wpis
-            App->>DB: Rollback
-            App-->>API: Blad wymagajacy korekty lub potwierdzenia
-        end
+        T->>D: Zapisz katalog, sesję, wpisy i summary
+        D-->>T: Commit
     end
-    API-->>Web: Potwierdzenie albo blad
-    Note over Web: Szkic pozostaje do potwierdzenia sukcesu
-    User->>Web: Otworz Dashboard / Details
-    Web->>API: Odczytaj liste / szczegoly
-    API->>DB: Odczyt zapisanych wartosci
-    DB-->>API: Summary, uporzadkowane wpisy i snapshoty
-    API-->>Web: Read model
+    T-->>W: 201, sessionId i Location albo błąd
+    Note over W: Szkic znika dopiero po potwierdzeniu sukcesu
 ```
 
-Inna treść pod ID ukończonej sesji nie jest nowym utworzeniem — plan zakłada konflikt i osobny proces edycji. Równoległe różne sesje wymagają dodatkowej ochrony poza unique client ID. Preview, jeśli zostanie przyjęty, nie zapisuje sesji, prób ani draftów katalogu.
-
-Źródło: [api](../api.md), [backend](../backend.md).
+Niepoprawna tożsamość/profil przerywają przepływ przed operacją biznesową. Inna treść pod istniejącym client ID daje konflikt. PUT dodatkowo sprawdza wersję i zapisuje rewizję przed/po; GET nie liczy ponownie. [Kontrakt](../api.md).

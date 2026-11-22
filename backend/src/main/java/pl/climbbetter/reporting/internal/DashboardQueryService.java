@@ -8,6 +8,7 @@ import pl.climbbetter.reporting.DashboardPersonalBests.GradePersonalBest;
 import pl.climbbetter.reporting.DashboardPersonalBests.ScalePersonalBests;
 import pl.climbbetter.reporting.DashboardQuery;
 import pl.climbbetter.reporting.DashboardSessionSummary;
+import pl.climbbetter.reporting.DashboardSessionsPage;
 
 import java.util.List;
 @Service 
@@ -26,7 +27,21 @@ class DashboardQueryService implements DashboardQuery{
 
     @Override
     public List<DashboardSessionSummary> findRecentSessions() {
-        return sessionRepository.findRecentSessions(currentUserProvider.currentUserId());
+        return findSessionsPage(20, null).items();
+    }
+
+    @Override
+    public DashboardSessionsPage findSessionsPage(int limit, String cursor) {
+        if (limit < 1 || limit > 100) throw new IllegalArgumentException("Limit must be between 1 and 100");
+        var rows = sessionRepository.findSessionsPage(currentUserProvider.currentUserId(), limit + 1,
+                DashboardSessionCursor.decode(cursor));
+        var items = rows.stream().limit(limit).map(DashboardSessionRepository.SessionRow::summary).toList();
+        String next = null;
+        if (rows.size() > limit) {
+            var last = rows.get(limit - 1);
+            next = new DashboardSessionCursor(last.summary().sessionDate(), last.createdAt(), last.summary().sessionId()).encode();
+        }
+        return new DashboardSessionsPage(items, next);
     }
 
     @Override

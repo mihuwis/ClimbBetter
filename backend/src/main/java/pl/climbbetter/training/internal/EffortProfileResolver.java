@@ -27,7 +27,7 @@ class EffortProfileResolver {
                             id,
                             code,
                             display_name,
-                            base_edl
+                            profile_intensity_index
                         FROM training.effort_profiles
                         WHERE code = :profileCode
                           AND is_active = true
@@ -38,7 +38,7 @@ class EffortProfileResolver {
                                 resultSet.getObject("id", UUID.class),
                                 resultSet.getString("code"),
                                 resultSet.getString("display_name"),
-                                resultSet.getBigDecimal("base_edl")
+                                resultSet.getBigDecimal("profile_intensity_index")
                         )
                 )
                 .optional()
@@ -51,7 +51,7 @@ class EffortProfileResolver {
             UUID id,
             String code,
             String displayName,
-            BigDecimal baseEdl
+            BigDecimal profileIntensityIndex
     ) {
     }
 }

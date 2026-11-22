@@ -16,28 +16,47 @@ class DashboardSessionRepository {
         this.jdbcClient = jdbcClient;
     }
 
-    List<DashboardSessionSummary> findRecentSessions(UUID userId) {
+    List<SessionRow> findSessionsPage(UUID userId, int limit, DashboardSessionCursor cursor) {
         return jdbcClient.sql("""
                         SELECT
                             id,
                             session_name,
                             session_date,
+                            session.created_at,
                             location_name_snapshot,
                             duration_minutes,
                             total_moves,
                             classic_load,
                             adjusted_load,
                             average_move_intensity,
-                            max_boulder_grade,
-                            max_route_grade
-                        FROM training.training_sessions
+                            maxima.max_boulder_grade,
+                            maxima.max_route_grade,
+                            (
+                                SELECT CASE
+                                    WHEN COUNT(DISTINCT entry.calculation_model_version) > 1
+                                        THEN 'mixed'
+                                    ELSE COALESCE(MIN(entry.calculation_model_version), 'v1')
+                                END
+                                FROM training.training_entries entry
+                                WHERE entry.session_id = session.id
+                            ) AS calculation_model_version
+                        FROM training.training_sessions session
+                        JOIN reporting.session_achievement_maxima maxima
+                          ON maxima.session_id = session.id
                         WHERE user_id = :userId
                           AND deleted_at IS NULL
-                        ORDER BY session_date DESC, created_at DESC
-                        LIMIT 20
+                          AND (CAST(:cursorDate AS date) IS NULL OR
+                               (session_date, session.created_at, session.id) <
+                               (CAST(:cursorDate AS date), CAST(:cursorCreatedAt AS timestamptz), CAST(:cursorId AS uuid)))
+                        ORDER BY session_date DESC, session.created_at DESC, session.id DESC
+                        LIMIT :limit
                         """)
                 .param("userId", userId)
-                .query((resultSet, rowNumber) -> new DashboardSessionSummary(
+                .param("limit", limit)
+                .param("cursorDate", cursor == null ? null : cursor.date().toString())
+                .param("cursorCreatedAt", cursor == null ? null : cursor.createdAt().toString())
+                .param("cursorId", cursor == null ? null : cursor.id().toString())
+                .query((resultSet, rowNumber) -> new SessionRow(new DashboardSessionSummary(
                         resultSet.getObject("id", UUID.class),
                         resultSet.getString("session_name"),
                         resultSet.getObject("session_date", java.time.LocalDate.class),
@@ -50,10 +69,13 @@ class DashboardSessionRepository {
                                 "average_move_intensity"
                         ),
                         resultSet.getString("max_boulder_grade"),
-                        resultSet.getString("max_route_grade")
-                ))
+                        resultSet.getString("max_route_grade"),
+                        resultSet.getString("calculation_model_version")
+                ), resultSet.getTimestamp("created_at").toInstant()))
                 .list();
     }
+
+    record SessionRow(DashboardSessionSummary summary, java.time.Instant createdAt) {}
 
     List<PersonalBestRow> findPersonalBests(UUID userId) {
         return jdbcClient.sql("""
@@ -89,12 +111,11 @@ class DashboardSessionRepository {
                                         ) ASC,
                                         entry.entry_order ASC
                                 ) AS style_rank
-                            FROM training.training_entries entry
+                            FROM reporting.achievement_ascents entry
                             JOIN training.training_sessions session
                               ON session.id = entry.session_id
                             WHERE session.user_id = :userId
                               AND session.deleted_at IS NULL
-                              AND entry.result_type = 'ASCENT'
                         )
                         SELECT
                             grade_scale_code,

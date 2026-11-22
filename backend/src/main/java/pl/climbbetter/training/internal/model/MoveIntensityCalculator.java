@@ -8,35 +8,37 @@ final class MoveIntensityCalculator {
 
     private static final int CALCULATION_SCALE = 10;
 
-    BigDecimal calculate(
-            BigDecimal gradePoints,
-            BigDecimal edlCount
-    ) {
+    BigDecimal calculateFromProfile(
+                BigDecimal gradePoints,
+                BigDecimal profileIntensityIndex
+        ) {
         Objects.requireNonNull(
                 gradePoints,
                 "Grade points are required"
         );
         Objects.requireNonNull(
-                edlCount,
-                "EDL count is required"
+                profileIntensityIndex,
+                "Profile intensity index is required"
         );
 
         if (gradePoints.signum() <= 0) {
-            throw new IllegalArgumentException(
-                    "Grade points must be positive"
-            );
+                throw new IllegalArgumentException(
+                        "Grade points must be positive"
+                );
         }
 
-        if (edlCount.signum() <= 0) {
-            throw new IllegalArgumentException(
-                    "EDL count must be positive"
-            );
+        if (profileIntensityIndex.signum() <= 0) {
+                throw new IllegalArgumentException(
+                        "Profile intensity index must be positive"
+                );
         }
 
-        return gradePoints.divide(
-                edlCount,
-                CALCULATION_SCALE,
-                RoundingMode.HALF_UP
-        );
-    }
+        return gradePoints
+                .multiply(profileIntensityIndex)
+                .divide(
+                        new BigDecimal("100"),
+                        CALCULATION_SCALE,
+                        RoundingMode.HALF_UP
+                );
+        }
 }

@@ -1,28 +1,30 @@
 # ClimbBetter
 
-Aplikacja do rejestrowania treningów wspinaczkowych, analizy obciążenia i postępów. Docelowo także planowanie i propozycje treningów.
+Aplikacja do zapisu treningów wspinaczkowych, analizy obciążenia i postępów.
 
-## Stan projektu
+Lokalnie działa React → Java → PostgreSQL: Google/Firebase i profil, CRUD sesji, trwały szkic, Calendar/Areas, model obciążenia v3 oraz Statistics (piramida i podsumowanie miesiąca/roku). Produkcja i GitHub Actions/GHCR mają przygotowany plan; wdrożenie pozostaje do wykonania. Flutter jest prototypem.
 
-Backend Java obsługuje CRUD sesji, obliczenia, audyt i katalog wspinaczek w PostgreSQL. React korzysta z API: Dashboard, szczegóły z edycją/usuwaniem, kalendarz, dodanie ukończonej sesji i Start now z trwałym lokalnym szkicem. Ten zakres przeszedł testy i oczekuje oceny użytkownika. Flutter pozostaje prototypem. [Raport i uruchomienie React](.ai/documentation/frontend-web.md).
+- [Uruchomienie lokalne](.ai/documentation/development.md) i [Firebase/konta modelowe](.ai/documentation/firebase-authentication-local.md).
+- [Stan aplikacji](.ai/project-management/progress.md), [priorytety](.ai/project-management/priorities.md), [plan produkcji i CI/CD](.ai/documentation/Environments_plan.md).
+- [Mapa dokumentacji](.ai/README.md), [decyzje](.ai/documentation/decisions.md), [zasady współpracy](AGENTS.md).
 
-## Struktura
+| Katalog            | Rola                                                                  |
+| ------------------ | --------------------------------------------------------------------- |
+| `backend/`         | Java/Spring Boot, API i obliczenia                                    |
+| `frontend-web/`    | React/TypeScript/Vite                                                 |
+| `frontend-mobile/` | prototyp Flutter                                                      |
+| `infra/`           | PostgreSQL Compose, launchery, emulator Firebase i narzędzia historii |
+| `.ai/`             | bieżąca dokumentacja i archiwum źródeł                                |
+| `backend-net/`     | archiwalny prototyp .NET                                              |
 
-| Katalog | Przeznaczenie |
-| --- | --- |
-| `backend/` | rozwijany backend Java |
-| `backend-net/` | archiwalny prototyp .NET jako materiał odniesienia |
-| `frontend-web/` | React, TypeScript i Vite |
-| `frontend-mobile/` | Flutter |
-| `infra/` | miejsce na infrastrukturę; obecnie bez Compose |
-| `.ai/` | zasady współpracy, wiedza biznesowa, dokumentacja techniczna i zarządzanie projektem |
+Dokumentacja aplikacji jest w `.ai`, a aktywne materiały pracy inżynierskiej w `docs`: [rozdziały i przegląd aktualności](docs/aktualizacja_dokumentow_2026-11-09.md). [Archiwum](.ai/archive/README.md) zachowuje dawne źródła aplikacji i pełną kopię sprzed skrócenia 2026-11-09; nie zastępuje obecnych materiałów dyplomowych.
 
-## Dokumentacja i uruchomienie
 
-- [Mapa dokumentacji i pełny schemat folderów](.ai/README.md).
-- [Uruchomienie i weryfikacja web, Javy oraz Fluttera](.ai/documentation/development.md).
-- [Aktualne priorytety](.ai/project-management/priorities.md) i [stan projektu](.ai/project-management/progress.md).
-- [Decyzje i pytania drugiej iteracji](.ai/documentation/decisions.md).
-- [Punkt wejścia do zasad współpracy](AGENTS.md).
 
-Porządkowanie dokumentacji jest w iteracji 2 z 3 (2026-10-03). `.ai` wraz z [archiwum](.ai/archive/README.md) ma być wersjonowana w Git. Oryginalne `docs` pozostają poza Git do czasu usunięcia ich przez użytkownika; bieżące informacje rozwijamy w `.ai`.
+
+
+## Uruchomiene Backend
+
+z poziomu katalogu backend 
+
+powershell.exe -NoProfile -File ../infra/start-local-api.ps1 -CredentialsFile 'C:/Users/micha/developer/FIRE_BASE_private_key/Climbbetter/climbbetter-dev-firebase-adminsdk-fbsvc-79927bd78b.json'

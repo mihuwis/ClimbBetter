@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 
 // Explicit opt-in: creates one session in the local Mihu database and soft-deletes it.
 test('React → real API → PostgreSQL: create, read, edit, calendar, delete', async ({ page }) => {
+  // The isolated Vite test proxy runs on 5174; local backend CORS allows the app's 5173 origin.
+  await page.route('**/api/v1/**', async route => {
+    const response = await route.fetch({ headers: { ...route.request().headers(), origin: 'http://127.0.0.1:5173' } });
+    await route.fulfill({ response });
+  });
   const title = `[SMOKE] React CRUD ${Date.now()}`;
   let sessionId: string | null = null;
   try {
@@ -19,9 +24,15 @@ test('React → real API → PostgreSQL: create, read, edit, calendar, delete', 
     await expect(page).toHaveURL(/sessions\/[\da-f-]+$/);
     sessionId = new URL(page.url()).pathname.split('/').pop()!;
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    const created = await page.request.get(`/api/v1/training/sessions/${sessionId}`);
+    expect(created.ok()).toBeTruthy();
+    expect(await created.json()).toMatchObject({ calculationModelVersion: 'v3', entries: [{ calculation: { calculationModelVersion: 'v3', profileIntensityIndex: 10, crux: null } }] });
+    await page.getByText('Calculation details', { exact: true }).click();
+    await expect(page.locator('dt', { hasText: /^Intensity index$/ }).locator('+ dd')).toHaveText('10');
     await page.screenshot({ path: 'test-results/session-details-desktop.png', fullPage: true });
     await page.getByRole('link', { name: 'Edit session', exact: true }).click();
     await page.locator('.draft-entry').getByRole('button', { name: 'Edit', exact: true }).click();
+    await page.getByLabel('Total moves').fill('12');
     await page.getByLabel('Executed moves').fill('12');
     await page.getByRole('button', { name: 'Apply entry changes' }).click();
     await page.getByLabel('Reason for correction').fill('Browser integration smoke check');
@@ -29,7 +40,7 @@ test('React → real API → PostgreSQL: create, read, edit, calendar, delete', 
     await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
     const persisted = await page.request.get(`/api/v1/training/sessions/${sessionId}`);
     expect(persisted.ok()).toBeTruthy();
-    expect(await persisted.json()).toMatchObject({ version: 1, totalMoves: 12 });
+    expect(await persisted.json()).toMatchObject({ version: 1, totalMoves: 12, calculationModelVersion: 'v3', entries: [{ executedMoves: 12, calculation: { calculationModelVersion: 'v3', profileIntensityIndex: 10, crux: null } }] });
     await page.getByRole('link', { name: 'Calendar', exact: true }).click();
     await expect(page.locator('.calendar-day.has-activity')).not.toHaveCount(0);
     await page.screenshot({ path: 'test-results/calendar-desktop.png', fullPage: true });

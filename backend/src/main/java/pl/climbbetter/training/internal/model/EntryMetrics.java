@@ -4,14 +4,23 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 record EntryMetrics(
-        BigDecimal edlCount,
         BigDecimal moveIntensity,
         BigDecimal classicLoad,
-        BigDecimal adjustedLoad
+        BigDecimal adjustedLoad,
+        BigDecimal profileIntensityIndex,
+        CruxMetrics crux
 ) {
 
     EntryMetrics {
-        Objects.requireNonNull(edlCount, "EDL count is required");
+        Objects.requireNonNull(
+                profileIntensityIndex,
+                "Profile intensity index is required"
+        );
+        if (profileIntensityIndex.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "Profile intensity index must be positive"
+            );
+        }
         Objects.requireNonNull(
                 moveIntensity,
                 "Move intensity is required"

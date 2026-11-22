@@ -1,0 +1,70 @@
+# Pojęcia i reguły domenowe
+
+Status: konsolidacja zatwierdzonego modelu z 2026-08-15 i ustaleń web z 2026-09-22; uzupełniona decyzją użytkownika DEC-018 z 2026-10-03.
+
+## Podstawowe pojęcia
+
+| Pojęcie               | Znaczenie                                                              |
+| --------------------- | ---------------------------------------------------------------------- |
+| `User`                | właściciel prywatnych danych treningowych ---------------------------- |
+| `TrainingSession`     | jeden trening z lokalną datą, strefą, czasem i uporządkowanymi wpisami |
+| `TrainingEntry`       | jedna próba, przejście albo rozgrzewka, nigdy sam licznik wielu prób   |
+| `Climb`               | stabilna tożsamość balda, drogi lub obwodu, niezależna od nazwy ------ |
+| `Area` / `Sector` --- | miejsce i opcjonalny podział na sektory ------------------------------ |
+| `Grade`               | wycena w konkretnej skali, wraz z indeksem i punktami ---------------- |
+| `EffortProfile`       | charakter trudności i bazowe EDL, niezależne od typu wspinania ------- |
+| `StyleRule`           | reguła wyznaczająca mnożnik dla rezultatu, trybu i znajomości -------- |
+| `UserGradeReference`  | poziom odniesienia ważny w określonym czasie, osobno dla balda i drogi |
+| `CalculationSnapshot` | zachowane wejścia, wartości słowników i wyniki konkretnego obliczenia  |
+| `SessionSummary`      | odtwarzalne podsumowanie wpisów, nie niezależne źródło danych -------- |
+| `CalculationRevision` | audyt jawnej korekty historycznych obliczeń -------------------------- |
+
+## Sesja i próby
+
+**Jedna sesja obejmuje jedno Area — rejon wspinaczkowy albo ściankę wspinaczkową.** To zasada biznesowa określająca sposób korzystania z aplikacji (DEC-018), a nie wyłącznie uproszczenie pierwszej implementacji.
+
+W tej samej sesji można wspinać się na wielu drogach i baldach oraz w różnych sektorach należących do tego Area. Zmiana sektora w obrębie rejonu nie wymaga nowej sesji. Trening w innym Area zapisujemy jako osobną sesję, również jeśli odbywa się tego samego dnia. Jedno Area może mieć wiele sesji; nie utożsamiamy sesji z całym dniem ani wyjazdem obejmującym różne rejony.
+
+Formularz wybiera miejsce dla całej sesji, a katalog i walidacja wpisów zachowują zgodność z tym miejscem. Techniczną konsekwencją jest jedno `TrainingSession.areaId`, wskazujące istniejące Area albo rozwiązany prywatny draft.
+
+`TrainingSession` stanowi granicę atomowego zapisu. Kolejność `entryOrder` jest częścią danych: wcześniejsza próba tej samej sesji wpływa na znajomość przy następnej. Backend bierze pod uwagę właściwą wcześniejszą historię w bazie i wcześniejsze wpisy przesłanej sesji; późniejszy wpis nie staje się wcześniejszą próbą.
+
+Sesja nie zapisuje `primaryDiscipline`; charakter jest wyprowadzany z typów wpisów. Nazwa sesji jest opcjonalna: brak nazwy powoduje utworzenie stabilnej nazwy z `sessionNameSource = GENERATED`, a ręczna zmiana daje `USER`. Notatka sesji i notatka próby są osobne.
+
+`sessionDate` jest lokalną datą treningową. `timeZoneId` przechowuje strefę IANA, `startedAt` i `endedAt` opisują chwile absolutne. Podróż do innej strefy nie przesuwa historycznego dnia. Dokładne reguły północy, precyzji czasu i kolejności sesji wymagają rozstrzygnięć `OPEN-08` i `OPEN-12`.
+
+## Wynik, tryb i znajomość
+
+`resultType` ma wartości `ASCENT`, `ATTEMPT`, `WARMUP`; nie wprowadzamy równoległego `isCompleted`. Wykonanie wszystkich ruchów samo nie dowodzi czystego przejścia. Dla ukończonego, nowo nazwanego balda bez historii szybki formularz proponuje OS (DEC-028). To edytowalna sugestia, a nie nieodwracalny dowód: użytkownik może wskazać wcześniejszą znajomość spoza aplikacji.
+
+`ascentMode` i wyprowadzony `familiarityBand` są odrębne. Znajomość opiera się na wcześniejszych kontaktach z ostatnich dwóch lat bez rozgrzewek. Fast RP używa numeru próby w całej znanej historii i nie zmienia mnożnika loadu. Dokładne progi, tabele i wzory: [grading-and-scoring](grading-and-scoring.md).
+
+Sposób asekuracji drogi jest osobnym wymiarem: `protectionMode` ma obecnie `LEAD` albo `TOP_ROPE`. Top rope, pokazywany w polskim UI jako „na wędkę”, może współistnieć z `OS`, `FLASH` albo `RP`; nie jest wartością `ascentMode`. `ProtectionMode` dotyczy `ROUTE`, a dla `BOULDER` i `CIRCUIT` pozostaje nieobecny.
+
+DEC-045 z 2026-11-01: ukończenie na wędkę jest wyłącznie faktem treningowym, **nigdy osiągnięciem przejścia drogi**, niezależnie od `ascentMode`. Nie kwalifikuje się do rekordów osobistych, Fast RP ani piramid; nadal wnosi ruchy i load oraz pozostaje kontaktem z tą wspinaczką. Piramida liczy każdą wspinaczkę raz po filtrze okresu i stylu. Widok RP obejmuje RP/OS/Flash, widok OS wyłącznie OS, dla baldów, dróg/obwodów i punktów łącznych. Reguły są zatwierdzone, lecz obecny kod osiągnięć wymaga dostosowania. [Szczegóły](achievement-pyramid.md).
+
+`totalMoves` opisuje długość wspinaczki, natomiast `executedMoves` opisuje faktycznie wykonane ruchy w danym wpisie. Doprecyzowanie użytkownika z 2026-11-04 (DEC-046): **ASCENT wymaga executedMoves == totalMoves**. Dla 8 ruchów ukończenie ma 8/8; 2/8 i 10/8 nie są Completed. ATTEMPT może obejmować mniej ruchów albo więcej dzięki powtórzeniom, np. 12 wykonanych na 8-ruchowej wspinaczce. Wykonanie pełnej liczby ruchów nadal nie dowodzi czystego przejścia: rezultat jest jawnym resultType. Nowa walidacja zapisu nie przepisuje dawnej historii.
+
+Rozgrzewka jest osobnym wariantem wpisu. Wymaga wyłącznie dodatniego `executedMoves`; nie wymaga wspinaczki, wyceny, `totalMoves`, profilu EDL, `ascentMode` ani `protectionMode`. Nie ma `edlCount` ani `moveIntensity`, wnosi jednak wykonane ruchy do sumy sesji. Jej `classicLoad` i `adjustedLoad` wynoszą `0` (DEC-026).
+
+Konflikt OS/Flash z historią wymaga pokazania użytkownikowi ostrzeżenia, jawnego potwierdzenia i audytu. Po potwierdzeniu deklaracja zachowuje mnożnik `1.50`, a snapshot rzeczywistą znajomość. `RP` bez historii aplikacji oznacza deklarowaną znajomość sprzed aplikacji i korzysta z bandu `LOW` (DEC-031).
+
+## Katalog i szybkie logowanie
+
+Struktura: `Area → opcjonalny Sector → Climb`. W v1 nie budujemy uniwersalnego drzewa geograficznego. Małe miejsce może nie mieć sektorów.
+
+Brak katalogowej pozycji nie blokuje treningu. Sama nazwa miejsca wystarcza do prywatnego Area `DRAFT`, domyślnie ukrytego w uporządkowanym My Areas. Nowa wspinaczka otrzymuje `clientClimbId`; przy końcowym zapisie backend tworzy prywatny rekord i zwraca stabilne ID. Nazwa nie jest kluczem tożsamości. Nowe obiekty szkicu web pozostają lokalne do końcowego zapisu.
+
+Uzupełnienie i scalanie draftów mają zachować historię oraz audyt mapowania. Przyszłe oficjalne pakiety rejonów są rozszerzeniem. Ulubione i projekty należą do relacji użytkownika z miejscem/drogą, nie do globalnego statusu wspinaczki.
+
+Decyzja DEC-018 potwierdza jedno `TrainingSession.areaId`. Pytanie `OPEN-03` zostało zamknięte 2026-10-03; sesje obejmujące wiele Area nie należą do przyjętego modelu.
+
+## Obliczenia i historia
+
+Backend wylicza wyniki z faktów użytkownika, słowników, historii i poziomu odniesienia. Frontend nie dostarcza wiążących wyników. Typ wspinania wyznacza kanoniczną skalę i poziom: `BOULDER` korzysta z `BOULDER_FONT`, a `ROUTE` i `CIRCUIT` z `ROUTE_FRENCH`. Indeksy wycen są porównywane tylko wewnątrz tej samej skali. Wspólne `gradePoints` są wersjonowaną kalibracją loadu, a nie dokładną konwersją etykiet między skalami. Dodatkowe systemy wejścia i prezentacji, takie jak V-scale lub skala Kurtyki, mapują się wersjonowanie na kanoniczny `Grade` i nie zmieniają kalkulatorów.
+
+Poziom wspierany piramidą, najwyższa ukończona wycena, profil OS/Flash/Fast RP/RP i confidence są różnymi informacjami. Confidence objaśnia siłę dowodów; nie jest dodatkową wagą loadu.
+
+Snapshot chroni historię przed późniejszą zmianą nazwy, wyceny, poziomu lub konfiguracji. Katalog archiwizujemy, nie usuwamy kaskadowo z treningami. Edycja dawnej sesji przelicza edytowany agregat i zachowuje poprzedni oraz nowy snapshot, autora, czas i powód. Nie przelicza automatycznie wszystkich późniejszych sesji: ich snapshoty pozostają zapisem wiedzy i reguł użytych w chwili zapisu. Masowa reewaluacja będzie osobną, jawną operacją z podglądem zakresu. Nie uruchamiamy jej automatycznie przy edycji ani zmianie słownika.
+
+Schemat i pełniejsze pola: [database](../documentation/database.md). Rejestr decyzji `DEC-001`–`DEC-018`: [decisions](../documentation/decisions.md). Źródło zachowane w całości: [CB_model](../archive/source-snapshot/docs/CB_model.md); zasadę jednej sesji w jednym Area potwierdził użytkownik 2026-10-03.

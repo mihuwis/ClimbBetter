@@ -24,7 +24,8 @@ public record TrainingSessionDetails(
         BigDecimal averageMoveIntensity,
         String maxBoulderGrade,
         String maxRouteGrade,
-        List<EntryDetails> entries
+        List<EntryDetails> entries,
+        String calculationModelVersion
 ) {
 
     public record EntryDetails(
@@ -60,7 +61,30 @@ public record TrainingSessionDetails(
             Integer currentLevelIndex,
             Integer relativeGradeDifference,
             Boolean outsideCalibratedRange,
-            String calculationModelVersion
+            String calculationModelVersion,
+            BigDecimal gradePoints,
+            BigDecimal baseEdl,
+            Integer gradeCalibrationVersion,
+            BigDecimal profileIntensityIndex,
+            CruxDetails crux,
+            BigDecimal effectiveCurrentLevelIndex,
+            BigDecimal effectiveRelativeGradeDifference,
+            String levelReferenceSource,
+            String levelEstimatorVersion,
+            Integer levelReferenceHorizonDays,
+            Integer levelReferenceSampleSize,
+            BigDecimal levelReferenceHistoryWeight
+    ) {
+    }
+
+    public record CruxDetails(
+            int hardMoveCount,
+            int easyMoveCount,
+            BigDecimal hardMoveIntensity,
+            BigDecimal easyMoveIntensity,
+            String baseMoveGradeLabel,
+            String hardMoveGradeLabel,
+            String easyMoveGradeLabel
     ) {
     }
 

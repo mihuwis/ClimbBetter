@@ -16,9 +16,11 @@ class AssessedEntryCalculatorTest {
     void calculatesMetricsIncludingRepeatedMoves() {
         MoveCount moveCount = new MoveCount(40, 80);
 
-        EntryMetrics result = calculator.calculate(
-                new BigDecimal("240"),
-                new BigDecimal("40"),
+        EntryMetrics result = calculator.calculateV2(
+                new BigDecimal("90"),
+                new EffortIntensityProfile(
+                        new BigDecimal("7"), null, null, null, null, null
+                ),
                 new BigDecimal("1.20"),
                 new BigDecimal("1.50"),
                 moveCount
@@ -26,19 +28,19 @@ class AssessedEntryCalculatorTest {
 
         assertAll(
                 () -> assertEquals(
-                        new BigDecimal("48.0000000000"),
-                        result.edlCount()
+                        new BigDecimal("7"),
+                        result.profileIntensityIndex()
                 ),
                 () -> assertEquals(
-                        new BigDecimal("5.0000000000"),
+                        new BigDecimal("6.3000000000"),
                         result.moveIntensity()
                 ),
                 () -> assertEquals(
-                        new BigDecimal("576.0000"),
+                        new BigDecimal("216.0000"),
                         result.classicLoad()
                 ),
                 () -> assertEquals(
-                        new BigDecimal("720.0000"),
+                        new BigDecimal("907.2000"),
                         result.adjustedLoad()
                 )
         );
@@ -52,11 +54,11 @@ assertAll(
                 contribution.executedMoves()
         ),
         () -> assertEquals(
-                new BigDecimal("576.0000"),
+                new BigDecimal("216.0000"),
                 contribution.classicLoad()
         ),
         () -> assertEquals(
-                new BigDecimal("720.0000"),
+                new BigDecimal("907.2000"),
                 contribution.adjustedLoad()
         )
 );

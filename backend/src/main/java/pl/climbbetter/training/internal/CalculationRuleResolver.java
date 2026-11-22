@@ -3,8 +3,12 @@ package pl.climbbetter.training.internal;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import pl.climbbetter.training.internal.model.FamiliarityBand;
+import pl.climbbetter.training.internal.model.RelativeEffortInterpolator;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Repository
@@ -146,6 +150,34 @@ class CalculationRuleResolver {
                 ));
     }
 
+    ResolvedContinuousRelativeEffort resolveRelativeEffort(
+            int gradeIndex,
+            BigDecimal currentLevelIndex
+    ) {
+        Objects.requireNonNull(currentLevelIndex, "Current level index is required");
+        if (gradeIndex < 0 || currentLevelIndex.signum() < 0) {
+            throw new IllegalArgumentException("Grade indexes cannot be negative");
+        }
+        Map<Integer, BigDecimal> multipliers = new HashMap<>();
+        jdbcClient.sql("""
+                        SELECT grade_difference, multiplier
+                        FROM training.relative_effort_rules
+                        WHERE is_active = true
+                        """)
+                .query((row, number) -> Map.entry(
+                        row.getInt("grade_difference"),
+                        row.getBigDecimal("multiplier")
+                ))
+                .list()
+                .forEach(rule -> multipliers.put(rule.getKey(), rule.getValue()));
+        RelativeEffortInterpolator.Result result = RelativeEffortInterpolator.interpolate(
+                gradeIndex, currentLevelIndex, multipliers
+        );
+        return new ResolvedContinuousRelativeEffort(
+                result.relativeGradeDifference(), result.multiplier(), result.outsideCalibratedRange()
+        );
+    }
+
     record ResolvedStyleRule(
             UUID id,
             String code,
@@ -159,6 +191,13 @@ class CalculationRuleResolver {
     record ResolvedRelativeEffort(
             UUID id,
             int relativeGradeDifference,
+            BigDecimal multiplier,
+            boolean outsideCalibratedRange
+    ) {
+    }
+
+    record ResolvedContinuousRelativeEffort(
+            BigDecimal relativeGradeDifference,
             BigDecimal multiplier,
             boolean outsideCalibratedRange
     ) {

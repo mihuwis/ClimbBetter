@@ -1,41 +1,21 @@
-# Komponenty systemu
+# Komponenty
 
-Data: 2026-10-03. Diagramy ręcznie opracowane z kodu i specyfikacji. Pierwszy opisuje obecność komponentów; drugi jest planem docelowym.
-
-## Stan odczytany z repozytorium
+Aktualizacja: 2026-11-09. Stan z kodu; produkcja i mobile offline pozostają planami.
 
 ```mermaid
 flowchart LR
-    Web[React: prototyp ekranow] --> WM[Mocki web]
-    Mobile[Flutter: prototyp UI] --> MM[Mocki i stan widgetu]
-    Java[Java: bootstrap Spring Boot] --> Clock[Clock UTC]
-    Java --> Config[Profile i konfiguracja JPA]
-    Tests[Kod testow Java] --> TC[Konfiguracja Testcontainers PostgreSQL]
-    Legacy[Archiwalny backend .NET]
+    U[Użytkownik] --> W[React: szkic i widoki]
+    W -->|Google Sign-In| F[Firebase Authentication]
+    W -->|HTTPS / Bearer ID token| I[identity: Security i UID → UUID]
+    I --> T[training: CRUD i kalkulatory]
+    I --> C[catalog: miejsca i wspinaczki]
+    I --> R[reporting: Dashboard i Statistics]
+    I -->|weryfikacja Admin SDK| F
+    I --> DB[(PostgreSQL V24)]
+    T --> DB
+    C --> DB
+    R --> DB
+    M[Flutter: prototyp na mockach]
 ```
 
-Brak strzałki frontend → Java oznacza brak potwierdzonej integracji treningowej. Konfiguracja testów nie dowodzi ich aktualnego powodzenia.
-
-## Architektura docelowa
-
-```mermaid
-flowchart LR
-    Browser[React + lokalny szkic] --> API[Java REST API]
-    Phone[Flutter + lokalna baza i outbox] --> API
-    subgraph Monolith[Modularny monolit Java - plan]
-        API --> Identity[identity]
-        API --> Catalog[catalog]
-        API --> Training[training]
-        API --> Reporting[reporting]
-        Training --> Calculator[Kalkulator i snapshoty]
-        Training --> Catalog
-        Training --> Identity
-    end
-    Catalog --> DB[(PostgreSQL)]
-    Training --> DB
-    Reporting --> DB
-```
-
-Moduły korzystają ze wspólnej bazy, ale zachowują własność danych i publiczne granice. Dokładne porty odczytu między modułami dopracujemy w implementacji. Pełny outbox mobile jest późniejszym przyrostem.
-
-Źródło: [architecture](../architecture.md).
+Local ma osobny Auth Emulator/bazę modeli. Obecny Compose uruchamia tylko PostgreSQL. [Opis modułów](../architecture.md), [plan hostingu i CI/CD](../Environments_plan.md).

@@ -1,6 +1,7 @@
 package pl.climbbetter.training.internal.model;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.math.BigDecimal;
 
@@ -12,15 +13,29 @@ class MoveIntensityCalculatorTest {
             new MoveIntensityCalculator();
 
     @Test
-    void calculatesMoveIntensity() {
-        BigDecimal result = calculator.calculate(
-                new BigDecimal("240"),
-                new BigDecimal("48")
-        );
-
-        assertEquals(
-                new BigDecimal("5.0000000000"),
-                result
-        );
-    }
+void calculatesMoveIntensityFromProfile() {
+    assertAll(
+            () -> assertEquals(
+                    new BigDecimal("9.2500000000"),
+                    calculator.calculateFromProfile(
+                            new BigDecimal("92.5"),
+                            new BigDecimal("10")
+                    )
+            ),
+            () -> assertEquals(
+                    new BigDecimal("6.3000000000"),
+                    calculator.calculateFromProfile(
+                            new BigDecimal("90"),
+                            new BigDecimal("7")
+                    )
+            ),
+            () -> assertEquals(
+                    new BigDecimal("4.5000000000"),
+                    calculator.calculateFromProfile(
+                            new BigDecimal("90"),
+                            new BigDecimal("5")
+                    )
+            )
+    );
+}
 }

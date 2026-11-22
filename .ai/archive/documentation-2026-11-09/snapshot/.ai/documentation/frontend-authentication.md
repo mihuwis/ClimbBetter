@@ -1,6 +1,6 @@
 # Logowanie i profil użytkownika — frontend web
 
-Data: 2026-10-24. Status: ustalony plan implementacji. Dokument opisuje uzgodnioną strukturę i przepływ; nie stanowi potwierdzenia wdrożenia logowania.
+Data: 2026-10-24; aktualizacja 2026-11-08. Status: Google/Firebase auth i profil podstawowy wdrożone, sprawdzone automatycznie i odebrane przez użytkownika na prawdziwym koncie Mihu. Użytkownik potwierdził nazwę i widoczność dotychczasowej historii; zachowano UUID i wszystkie dane. [Wynik implementacji i uruchomienie](firebase-authentication-local.md) uzupełnia [plan lokalny](firebase-authentication-local-plan.md). Ankieta pozostaje na później (DEC-051, OPEN-26 zamknięte).
 
 Źródło: ustalenia z użytkownikiem i polecenie ich zapisania z 2026-10-24. Obecna struktura aplikacji: [frontend web](frontend-web.md).
 
@@ -8,7 +8,7 @@ Data: 2026-10-24. Status: ustalony plan implementacji. Dokument opisuje uzgodnio
 
 Frontend React obsługuje logowanie Google przez Firebase Authentication, stan zalogowania oraz formularz profilu. Backend Java w module `identity` weryfikuje tożsamość i ustala wewnętrzny UUID użytkownika ClimbBetter.
 
-Firebase Authentication przechowuje techniczne konto logowania: Firebase UID, metody logowania i podstawowe dane od dostawcy. Konto CB, ankietę, profil i dane treningowe przechowujemy przez własne API w PostgreSQL. Firebase UID jest powiązany z UUID konta CB.
+Firebase Authentication przechowuje techniczne konto logowania: Firebase UID, metody logowania i podstawowe dane od dostawcy. Konto CB, profil i dane treningowe przechowujemy przez własne API w PostgreSQL. Późniejsza ankieta również będzie należeć do danych aplikacji. Firebase UID jest powiązany z UUID konta CB.
 
 W tym etapie dodajemy logowanie Google. Docelowo kolejne metody logowania mogą zostać dołączone do tego samego konta.
 
@@ -34,10 +34,10 @@ features/
 
 pages/
   LoginPage.tsx                      ← ekran logowania
-  ProfileSetupPage.tsx               ← ankieta pierwszego logowania
+  ProfileSetupPage.tsx               ← nazwa i potwierdzenie profilu
 ```
 
-`shared/api/http.ts` już istnieje. Pozostałe wymienione pliki są planowane w ramach tego przyrostu.
+Wymienione pliki istnieją po implementacji 2026-11-08. Dodano też stan generacji sesji transportu, ekran oczekiwania na powiązanie dziennika oraz wybór lokalnych kont emulatora. `CurrentUser` należy teraz do modelu profilu, a strony używają wspólnego auth context zamiast osobno pobierać `/identity/me`.
 
 ## Zadania plików
 
@@ -50,7 +50,7 @@ pages/
 - `features/profile/api/profile.ts` — odczyt i zapis profilu przez własne API z użyciem wspólnego transportu HTTP.
 - `features/profile/model/profile.types.ts` — typy danych profilu wymienianych z API.
 - `pages/LoginPage.tsx` — ekran uruchamiający logowanie Google.
-- `pages/ProfileSetupPage.tsx` — ekran ankiety uzupełnianej po pierwszym logowaniu.
+- `pages/ProfileSetupPage.tsx` — ekran nazwy i potwierdzenia podstawowego profilu po pierwszym logowaniu; ankieta wspinaczkowa pozostaje na później.
 
 ## Przepływ logowania i profilu
 
@@ -63,7 +63,7 @@ Odpowiednik `userProfile.service.ts` z MiniJiry nadal będzie potrzebny, ale bę
 
 ## Pierwszy krok implementacji
 
-**Pierwszy krok po stronie kodu to `shared/lib/firebase.ts` oraz `features/auth/services/auth.service.ts`** — inicjalizacja Firebase i obsługa logowania Google. To dwa ściśle powiązane elementy, od których zaczniemy.
+Kolejność rozszerzona 2026-11-08: najpierw baseline i świeża kopia historii (A00), potem projekt Firebase dev (A01). Pierwszy krok po stronie Reacta nadal obejmuje `shared/lib/firebase.ts` oraz `features/auth/services/auth.service.ts` (A02). Techniczny login Google nie uruchamia jeszcze automatycznego tworzenia kont CB: najpierw wiążemy UID Mihu z dotychczasowym UUID, aby nie utworzyć drugiego pustego konta. [Pełna kolejność A00–A08](firebase-authentication-local-plan.md#9-kolejność-realizacji-i-warunki-ukończenia).
 
 ## Punkty odniesienia w obecnym kodzie
 

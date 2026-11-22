@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import pl.climbbetter.identity.CurrentUserProvider;
+import pl.climbbetter.training.AchievementEligibility;
 import pl.climbbetter.training.CreateTrainingSessionCommand;
 import pl.climbbetter.training.TrainingEntryCommand;
 import pl.climbbetter.training.TrainingSessionDetails;
@@ -33,14 +34,18 @@ import java.util.UUID;
 @Service
 public class TrainingSessionService {
 
+    private static final String CURRENT_MODEL_VERSION = "v3";
+
     private final CurrentUserProvider currentUserProvider;
     private final Clock clock;
     private final AreaResolver areaResolver;
     private final GradeResolver gradeResolver;
     private final EffortProfileResolver effortProfileResolver;
+    private final IntensityProfileResolver intensityProfileResolver;
     private final ClimbResolver climbResolver;
     private final ClimbHistoryResolver climbHistoryResolver;
     private final ClimberLevelResolver climberLevelResolver;
+    private final RecencyLoadSettings recencyLoadSettings;
     private final CalculationRuleResolver calculationRuleResolver;
     private final TrainingMetricsFacade trainingMetricsFacade;
     private final TrainingSessionFingerprint fingerprint;
@@ -53,9 +58,11 @@ public class TrainingSessionService {
             AreaResolver areaResolver,
             GradeResolver gradeResolver,
             EffortProfileResolver effortProfileResolver,
+            IntensityProfileResolver intensityProfileResolver,
             ClimbResolver climbResolver,
             ClimbHistoryResolver climbHistoryResolver,
             ClimberLevelResolver climberLevelResolver,
+            RecencyLoadSettings recencyLoadSettings,
             CalculationRuleResolver calculationRuleResolver,
             TrainingMetricsFacade trainingMetricsFacade,
             TrainingSessionFingerprint fingerprint,
@@ -67,9 +74,11 @@ public class TrainingSessionService {
         this.areaResolver = areaResolver;
         this.gradeResolver = gradeResolver;
         this.effortProfileResolver = effortProfileResolver;
+        this.intensityProfileResolver = intensityProfileResolver;
         this.climbResolver = climbResolver;
         this.climbHistoryResolver = climbHistoryResolver;
         this.climberLevelResolver = climberLevelResolver;
+        this.recencyLoadSettings = recencyLoadSettings;
         this.calculationRuleResolver = calculationRuleResolver;
         this.trainingMetricsFacade = trainingMetricsFacade;
         this.fingerprint = fingerprint;
@@ -82,6 +91,7 @@ public class TrainingSessionService {
         validateCommand(command);
 
         UUID userId = currentUserProvider.currentUserId();
+        repository.lockUserTimeline(userId);
         String requestFingerprint = fingerprint.calculate(command);
 
         TrainingSessionRepository.ExistingSession existingSession =
@@ -123,6 +133,7 @@ public class TrainingSessionService {
                 resolveLevels(
                         userId,
                         command.sessionDate(),
+                        command.startedAt(),
                         orderedEntries,
                         grades
                 );
@@ -172,7 +183,8 @@ public class TrainingSessionService {
                 orderedEntries,
                 grades,
                 levels,
-                createdAt
+                createdAt,
+                CURRENT_MODEL_VERSION
         );
 
         return sessionId;
@@ -197,11 +209,13 @@ public class TrainingSessionService {
         CreateTrainingSessionCommand command = updateCommand.session();
         validateCommand(command);
         UUID userId = currentUserProvider.currentUserId();
+        repository.lockUserTimeline(userId);
         TrainingSessionDetails before = readDetails(userId, sessionId);
 
         if (!before.clientSessionId().equals(command.clientSessionId())) {
             throw new IllegalArgumentException("Client session ID cannot be changed");
         }
+        String modelVersion = CURRENT_MODEL_VERSION;
         if (before.version() != updateCommand.expectedVersion().longValue()
                 || !repository.advanceVersion(
                 userId, sessionId, updateCommand.expectedVersion())) {
@@ -215,7 +229,7 @@ public class TrainingSessionService {
                 .toList();
         Map<Integer, GradeResolver.ResolvedGrade> grades = resolveGrades(orderedEntries);
         Map<String, ClimberLevelResolver.ResolvedLevel> levels = resolveLevels(
-                userId, command.sessionDate(), orderedEntries, grades
+                userId, command.sessionDate(), command.startedAt(), orderedEntries, grades
         );
         AreaResolver.ResolvedArea area = areaResolver.resolve(
                 userId, command.areaId(), command.clientAreaId(), command.areaName()
@@ -243,7 +257,7 @@ public class TrainingSessionService {
                 changedAt
         ));
         calculateAndSaveEntries(
-                sessionId, userId, command, area, orderedEntries, grades, levels, changedAt
+                sessionId, userId, command, area, orderedEntries, grades, levels, changedAt, modelVersion
         );
 
         TrainingSessionDetails after = readDetails(userId, sessionId);
@@ -297,7 +311,8 @@ public class TrainingSessionService {
             List<TrainingEntryCommand> orderedEntries,
             Map<Integer, GradeResolver.ResolvedGrade> grades,
             Map<String, ClimberLevelResolver.ResolvedLevel> levels,
-            Instant createdAt
+            Instant createdAt,
+            String modelVersion
     ) {
         List<CalculatedEntry> calculatedEntries =
                 new ArrayList<>();
@@ -309,7 +324,7 @@ public class TrainingSessionService {
             if ("WARMUP".equals(entry.resultType())) {
                 CalculatedEntry calculation =
                         trainingMetricsFacade.calculateWarmUp(
-                                entry.executedMoves()
+                                entry.executedMoves(), modelVersion
                         );
 
                 repository.insertWarmUpEntry(
@@ -319,6 +334,7 @@ public class TrainingSessionService {
                         entry.entryOrder(),
                         entry.executedMoves(),
                         entry.notes(),
+                        modelVersion,
                         createdAt
                 );
 
@@ -362,26 +378,19 @@ public class TrainingSessionService {
             ClimberLevelResolver.ResolvedLevel level =
                     levels.get(grade.scaleCode());
 
-            CalculationRuleResolver.ResolvedRelativeEffort
-                    relativeEffort =
-                    calculationRuleResolver.resolveRelativeEffort(
-                            grade.gradeIndex(),
-                            level.gradeIndex()
-                    );
+            var continuousRelativeEffort = calculationRuleResolver.resolveRelativeEffort(
+                    grade.gradeIndex(), level.effectiveGradeIndex());
+            var relativeEffort = new CalculationRuleResolver.ResolvedRelativeEffort(
+                    null, grade.gradeIndex() - level.gradeIndex(), continuousRelativeEffort.multiplier(),
+                    continuousRelativeEffort.outsideCalibratedRange());
 
-            CalculatedEntry calculation =
-                    trainingMetricsFacade.calculateAssessed(
-                            entry.climbType(),
-                            entry.resultType(),
-                            entry.ascentMode(),
-                            entry.protectionMode(),
-                            grade.gradePoints(),
-                            effortProfile.baseEdl(),
-                            styleRule.multiplier(),
-                            relativeEffort.multiplier(),
-                            requiredTotalMoves(entry),
-                            entry.executedMoves()
-                    );
+            CalculatedEntry calculation = trainingMetricsFacade.calculateAssessedV3(
+                    entry.climbType(), entry.resultType(), entry.ascentMode(),
+                    entry.protectionMode(), grade.gradePoints(),
+                    intensityProfileResolver.resolve(grade, effortProfile),
+                    styleRule.multiplier(), relativeEffort.multiplier(),
+                    requiredTotalMoves(entry), entry.executedMoves()
+            );
 
             int attemptOrdinal =
                     history.contactsAllTime() + 1;
@@ -410,7 +419,9 @@ public class TrainingSessionService {
 
             calculatedEntries.add(calculation);
 
-            if ("ASCENT".equals(entry.resultType())) {
+            if (AchievementEligibility.isEligible(
+                    entry.resultType(), entry.climbType(), entry.protectionMode()
+            )) {
                 if ("BOULDER".equals(entry.climbType())) {
                     maxBoulderGrade = higherGrade(
                             maxBoulderGrade,
@@ -470,6 +481,7 @@ public class TrainingSessionService {
     resolveLevels(
             UUID userId,
             LocalDate sessionDate,
+            Instant startedAt,
             List<TrainingEntryCommand> entries,
             Map<Integer, GradeResolver.ResolvedGrade> grades
     ) {
@@ -483,30 +495,25 @@ public class TrainingSessionService {
                 continue;
             }
 
-            ClimberLevelResolver.ResolvedLevel level =
-                    climberLevelResolver.resolve(
-                                    userId,
-                                    scaleCode,
-                                    sessionDate
-                            )
-                            .orElseGet(() ->
-                                    climberLevelResolver
-                                            .inferFromSession(
-                                                    scaleCode,
-                                                    gradesForResult(
-                                                            entries,
-                                                            grades,
-                                                            scaleCode,
-                                                            "ASCENT"
-                                                    ),
-                                                    gradesForResult(
-                                                            entries,
-                                                            grades,
-                                                            scaleCode,
-                                                            "ATTEMPT"
-                                                    )
-                                            )
-                            );
+            List<GradeResolver.ResolvedGrade> currentAscents = entries.stream()
+                    .filter(entry -> "ASCENT".equals(entry.resultType()))
+                    .filter(entry -> recencyLoadSettings.includeTopRope()
+                            || AchievementEligibility.isEligible(entry.resultType(), entry.climbType(), entry.protectionMode()))
+                    .map(entry -> grades.get(entry.entryOrder())).filter(Objects::nonNull)
+                    .filter(gradeEntry -> scaleCode.equals(gradeEntry.scaleCode())).toList();
+            // Training-only entries are a provisional starting assumption, never historical evidence.
+            List<GradeResolver.ResolvedGrade> trainingInputs = entries.stream()
+                    .filter(entry -> "ATTEMPT".equals(entry.resultType())
+                            || ("ASCENT".equals(entry.resultType()) && !recencyLoadSettings.includeTopRope()
+                            && !AchievementEligibility.isEligible(entry.resultType(), entry.climbType(), entry.protectionMode())))
+                    .map(entry -> grades.get(entry.entryOrder())).filter(Objects::nonNull)
+                    .filter(gradeEntry -> scaleCode.equals(gradeEntry.scaleCode())).toList();
+            ClimberLevelResolver.ResolvedLevel fallback = climberLevelResolver.inferFromSession(
+                    scaleCode, currentAscents, trainingInputs);
+            ClimberLevelResolver.ResolvedLevel level = climberLevelResolver.resolveWeighted(
+                    userId, scaleCode, sessionDate, startedAt, fallback,
+                    recencyLoadSettings.horizonDays(), recencyLoadSettings.includeTopRope(),
+                    recencyLoadSettings.weightSmallSample());
 
             levels.put(scaleCode, level);
         }
@@ -713,7 +720,9 @@ public class TrainingSessionService {
             TrainingEntryCommand entry,
             int attemptOrdinal
     ) {
-        return "ASCENT".equals(entry.resultType())
+        return AchievementEligibility.isEligible(
+                entry.resultType(), entry.climbType(), entry.protectionMode()
+        )
                 && "RP".equals(entry.ascentMode())
                 && (
                 attemptOrdinal == 2

@@ -35,9 +35,37 @@ final class AdjustedLoadCalculator {
                 "Relative effort multiplier"
         );
 
-        return BigDecimal
+        BigDecimal moveWork = BigDecimal
                 .valueOf(moveCount.executedMoves())
-                .multiply(moveIntensity)
+                .multiply(moveIntensity);
+
+        return calculateFromWork(
+                moveWork,
+                styleMultiplier,
+                relativeEffortMultiplier
+        );
+    }
+
+    BigDecimal calculateFromWork(
+            BigDecimal moveWork,
+            BigDecimal styleMultiplier,
+            BigDecimal relativeEffortMultiplier
+    ) {
+        Objects.requireNonNull(moveWork, "Move work is required");
+        Objects.requireNonNull(styleMultiplier, "Style multiplier is required");
+        Objects.requireNonNull(
+                relativeEffortMultiplier,
+                "Relative effort multiplier is required"
+        );
+
+        requireNonNegative(moveWork, "Move work");
+        requireNonNegative(styleMultiplier, "Style multiplier");
+        requireNonNegative(
+                relativeEffortMultiplier,
+                "Relative effort multiplier"
+        );
+
+        return moveWork
                 .multiply(styleMultiplier)
                 .multiply(relativeEffortMultiplier)
                 .setScale(RESULT_SCALE, RoundingMode.HALF_UP);

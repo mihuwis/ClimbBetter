@@ -1,33 +1,33 @@
-# Weryfikacja backendu przed integracją React
+# Weryfikacja aplikacji
 
-Data: 2026-10-17. Status: potwierdzony pełny zielony zestaw testów backendu. Źródła: wynik Maven, raporty Surefire w `backend/target/surefire-reports` i log `backend/target/backend-test-run.log`.
+Aktualizacja dokumentu: 2026-11-15. Poniżej wyniki bieżącej weryfikacji oraz wcześniejsze datowane raporty; [pełne relacje](../archive/documentation-2026-11-09/snapshot/.ai/documentation/backend-verification.md) i [raport auth](../archive/documentation-2026-11-09/snapshot/.ai/documentation/firebase-authentication-local.md).
 
-## Wynik
+## 2026-11-15 — czas sesji, DEC-053
 
-Aktualizacja po integracji React: pełny Maven `test` ponowiono z sukcesem — **52 testy, 0 failures/errors/skipped**, 31,023 s. Log: `backend/target/frontend-integration-verification.log`. Dodatkowy test sprawdza kalendarz z 22 widocznymi sesjami, wyklucza cudzą/usuniętą, sprawdza zakres dat i bieżącą tożsamość. React potwierdzono również pełnym przebiegiem przeglądarkowym na trwałej bazie Mihu; [raport](frontend-web.md). Poniższe 51 testów dokumentuje wcześniejszą bramkę przed React.
+`./mvnw.cmd verify`: 242 testy, bez błędów i pominięć. W tym 19 scenariuszy `TrainingSessionTimeConflictIntegrationTest`: częściowe i pełne nakładanie, identyczne okna, granice przedziałów, inne miejsca i użytkownicy, strefy i północ, zachowanie stanu po odrzuconej edycji, zwolnienie czasu przez usunięcie, blokada zapisu poza API, jednoczesne dodawanie/edycje i identyczne retry. Starsze dane testowe kalendarza, Dashboardu i raportów otrzymały rozłączne czasy.
 
-Na polecenie użytkownika asystent sprawdził Docker (`docker version` zawierał Client i Server), a następnie wykonał pełne Maven `test`. Wynik: **51 testów, 0 failures, 0 errors, 0 skipped; BUILD SUCCESS**. Czas raportowany przez Maven: 24,362 s. Nie były potrzebne poprawki kodu ani testów.
+Frontend: lint i build poprawne; `npm.cmd run test:e2e -- sessions.spec.ts` — 15/15 w Edge. Testy z kontrolowanym API potwierdzają komunikat `SESSION_TIME_CONFLICT`, zachowanie wpisów i identyfikatorów szkicu po odświeżeniu oraz skuteczny ponowny zapis po zmianie godzin. Wykorzystano istniejącą obsługę błędów formularza.
 
-Testcontainers uruchomił tymczasowy PostgreSQL `17.6-alpine`. Flyway zbudował bazy testowe do `V15`. Testy nie korzystały z trwałej bazy Compose z danymi Mihu.
+Lokalna baza: prywatny backup przed migracją w `.local-backups/session-time-20261115-111006/`; Flyway przeszedł z V24 do V25. Wymagane granice czasu i ograniczenie wykluczające kolizje są aktywne. Sumy kontrolne wszystkich rekordów sesji (53), wpisów (424), użytkowników, miejsc i wspinaczek pozostały identyczne; 18 aktywnych sesji nie ma kolizji. Logi w `backend/target/session-time-*-test.log`, `backend/target/session-time-local-migration.log` i `frontend-web/test-results/session-time-browser-test.log`.
 
-## Potwierdzony zakres
+## Wcześniejsze wyniki
 
-- `TrainingSessionCrudIntegrationTest` (2): create → read → update → delete, przeliczenie loadu, wersja i audyt, konflikt starej wersji, rollback błędnej edycji, wykluczenie usuniętej sesji z odczytów, kontrola właściciela i prywatność katalogu.
-- `TrainingSessionFlowIntegrationTest` (6): zapis sesji, Dashboard, personal bests i Details, rollback całego zapisu, identyczne retry, konflikt zmienionej treści, OS i Flash z jawnym potwierdzeniem oraz zachowaniem mnożnika 1.50 i flag audytu.
-- `CatalogClimbScenariosIntegrationTest` (4): nowe i wcześniej znane wspinaczki w treningu, zapamiętywanie Climb przed treningiem bez tworzenia kontaktów, retry katalogu i konflikt klientowego ID, dostęp, niezależność identycznych nazw, sektory, metry, ręczna liczba ruchów, mapowanie Kurtyki i projekt bez wyceny.
-- `ClimbMoveSuggestionTest` (2): 2 ruchy/m, pierwszeństwo ręcznej wartości, domyślne 8 ruchów balda, zaokrąglenie i odrzucenie niepoprawnej długości.
-- Pozostałe testy: kalkulatory i reguły domenowe, kontekst Spring i zegar UTC, odczyt Dashboardu, kontroler Dashboardu oraz granice modułów Modulith.
+| Data / przyrost             | Zapisany wynik i zakres                                                                                                                                                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-08 Firebase         | Backend 220/220, bez błędów/pominięć; web build/lint, 30 modelowych i 37 dotychczasowych browser. Dodatkowe 4 browser SDK/emulator oraz 1 pełnego UI/API/PostgreSQL. Weryfikator emulatora: 8 PASS. Prawdziwe Google, profil i historia potwierdzone przez użytkownika. |
+| 2026-11-07 Training summary | Backend 210/210, web build/lint, 30 modelowych/37 browser. Niezależnie 18 raportów porównanych z surowymi danymi 17 sesji/137 wpisów; 1 odczytowy browser pokrył 6 kombinacji UI/API. Historia i schemaVersion bez zmian.                                               |
+| 2026-11-04 v3               | Backend 176/176; web build/lint/24 modelowe oraz realny CRUD browser na osobnej bazie. V23 i replay 16 sesji/133 wpisów zweryfikowane, oryginały zachowane.                                                                                                             |
+| 2026-11-04 formularz        | Completed: backend 136/136 i web 24 modelowe/31 browser; Repeat session/ręczny czas: 16 modelowych/26 browser w ówczesnym zestawie.                                                                                                                                     |
+| 2026-11-03–04 piramida      | Backend 120/120; V21/V22, 12 kombinacji HTTP/listy i kontrola niezmienności historii. Frontend build/lint/11 modelowych/22 browser oraz osobny odczytowy test 12 kombinacji z realnym API.                                                                              |
+| 2026-11-01 v2               | Backend 74/74; osobny podzbiór V20: 9/9. V16–V20 zachowały zapisane wyniki. Frontend build/lint/6 modelowych/13 browser.                                                                                                                                                |
 
-Są to wyniki istniejących scenariuszy, nie deklaracja kompletności wszystkich możliwych zachowań API. Rozszerzenia wcześniej odłożone, takie jak równoległy pierwszy POST sesji, recent personal bests i produkcyjne logowanie, zachowują swój zakres.
+Liczby opisują różne wersje zestawu i nie są sumą unikalnych testów. Kontrolowane browser testy nie zastępują prawdziwego API; emulator nie zastępuje Google Sign-In. Migracja, zgodność danych, wynik testu i ręczny odbiór UI to oddzielne dowody.
 
-## Następny krok
+## Lokalizacja dowodów
 
-Przechodzimy do React: najpierw Dashboard na prawdziwych danych Mihu zamiast mocków, następnie Details, formularz sesji z odzyskiwalnym szkicem oraz edycja/usuwanie. Dalsze uzupełnienia API wynikają z potrzeb konkretnego ekranu.
+- Surefire: `backend/target/surefire-reports` i historyczny izolowany build `backend/target/v2-verification/target/surefire-reports`. Izolacja wyjścia chroniła `.class` przed nadpisaniem przez IDE; źródła i zależności były te same.
+- Raport okresowy: `backend/target/v2-verification/period-summary-local-verification.json` i `period-summary-full-test.log`.
+- Auth: `.local-backups/firebase-auth-implementation/emulator-api-verification.json` oraz `mihu-real-google-final-verification.json`; wynik końcowy potwierdził zachowane UUID i dane Mihu.
+- Replay: [historia odtworzenia i dziennik](training-history-export.md). Zrzuty/trace Playwright i prywatne raporty są ignorowane, mogą nie być obecne w świeżym checkout.
 
-Polecenie do ponowienia pełnego zestawu w Bash z katalogu `backend`:
-
-```bash
-./mvnw test
-```
-
-Odczyt danych lokalnych, Swaggera i 14 sesji DEMO jest opisany osobno w [uruchomieniu](development.md) i [historii Mihu](mihu-demo-history.md).
+Przegląd dokumentacji z 2026-11-09 sprawdzał źródła, odsyłacze i zachowanie archiwum; nie obejmował ponownego uruchomienia aplikacji. [Polecenia weryfikacji](development.md), [pozostały odbiór](../project-management/priorities.md).

@@ -14,3 +14,8 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     disable-swagger-default-url: true
+
+climbbetter:
+  auth:
+    mode: ${CB_AUTH_MODE:firebase}
+    project-id: ${CB_FIREBASE_PROJECT_ID:}

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.climbbetter.training.internal.AscentModeHistoryConflictException;
 import pl.climbbetter.training.internal.TrainingSessionConflictException;
+import pl.climbbetter.training.internal.TrainingSessionTimeConflictException;
 import pl.climbbetter.training.internal.TrainingSessionVersionConflictException;
 
 @RestControllerAdvice(
@@ -57,6 +58,18 @@ class TrainingApiExceptionHandler {
         );
         problem.setTitle("Training session version conflict");
         problem.setProperty("code", "SESSION_VERSION_CONFLICT");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    @ExceptionHandler(TrainingSessionTimeConflictException.class)
+    ResponseEntity<ProblemDetail> handleTimeConflict(
+            TrainingSessionTimeConflictException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, exception.getMessage()
+        );
+        problem.setTitle("Training session time conflict");
+        problem.setProperty("code", "SESSION_TIME_CONFLICT");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
     }
 

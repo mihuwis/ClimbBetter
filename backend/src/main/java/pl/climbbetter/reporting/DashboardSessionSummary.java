@@ -16,7 +16,35 @@ public record DashboardSessionSummary(
         BigDecimal adjustedLoad,
         BigDecimal averageMoveIntensity,
         String maxBoulderGrade,
-        String maxRouteGrade
+        String maxRouteGrade,
+        String calculationModelVersion
 ) {
-
+    public DashboardSessionSummary(
+            UUID sessionId,
+            String sessionName,
+            LocalDate sessionDate,
+            String areaName,
+            int durationMinutes,
+            int totalMoves,
+            BigDecimal classicLoad,
+            BigDecimal adjustedLoad,
+            BigDecimal averageMoveIntensity,
+            String maxBoulderGrade,
+            String maxRouteGrade
+    ) {
+        this(
+                sessionId,
+                sessionName,
+                sessionDate,
+                areaName,
+                durationMinutes,
+                totalMoves,
+                classicLoad,
+                adjustedLoad,
+                averageMoveIntensity,
+                maxBoulderGrade,
+                maxRouteGrade,
+                "v1"
+        );
+    }
 }

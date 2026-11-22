@@ -1,0 +1,212 @@
+[
+  {
+    "path": ".ai/business/achievement-pyramid.md",
+    "bytes": 11497,
+    "sha256": "5abfc21b022c0c0db7c305a82e478a92eb1b2082b3d53ee56cd834e1a0541923"
+  },
+  {
+    "path": ".ai/business/domain.md",
+    "bytes": 8932,
+    "sha256": "e480bad57877ce518a4d70a68015063fac0d8aec4c065b4fafb02c70772b85c3"
+  },
+  {
+    "path": ".ai/business/grading-and-scoring.md",
+    "bytes": 46147,
+    "sha256": "40d19d2fa8c7eb49ae75b8fb608b94f95e308e4fb75fee6174c7fa1d74bc0158"
+  },
+  {
+    "path": ".ai/business/product.md",
+    "bytes": 4630,
+    "sha256": "1b451c82f2476a2db87009638c2732ec3706c422ea5a3a62b8a897d43dd085ff"
+  },
+  {
+    "path": ".ai/business/training.md",
+    "bytes": 17956,
+    "sha256": "338a29d803a739aad80479c458eb9ab2fc991fbdbb369f574991acdafcb3057b"
+  },
+  {
+    "path": ".ai/context/collaboration.md",
+    "bytes": 2639,
+    "sha256": "3f58ec40cac7bab506d9e60daf30520eb4a709cf07f0c0778daef91aaf779665"
+  },
+  {
+    "path": ".ai/context/conventions.md",
+    "bytes": 6599,
+    "sha256": "5f89dee9d5182d2bf9b19b73c062ef2bf7f682bc2fad773edbd1a716333a198d"
+  },
+  {
+    "path": ".ai/documentation/achievement-pyramid-backend.md",
+    "bytes": 8991,
+    "sha256": "a332437927b5fedf671f0fede02b77a7430b15737777241e015b48c6485b146e"
+  },
+  {
+    "path": ".ai/documentation/achievement-pyramid-implementation-plan.md",
+    "bytes": 15676,
+    "sha256": "64b39eeaf3c18b8b4b1a206697df9b5639840453eb42f274a6536a4618dcd60f"
+  },
+  {
+    "path": ".ai/documentation/api.md",
+    "bytes": 21280,
+    "sha256": "0be124e2ece55fbb2e8399619bba62c7028b549e380eb6451fd2adeb6f41364d"
+  },
+  {
+    "path": ".ai/documentation/architecture.md",
+    "bytes": 5805,
+    "sha256": "e2b849bccf5866edf456e8db382f5620e5a0fc1cc6161e52baabadb7f8fcf1fb"
+  },
+  {
+    "path": ".ai/documentation/backend-crud-handoff.md",
+    "bytes": 6983,
+    "sha256": "da82bbec3560cef26400d57a4a275eb26ce2903b9db2664f8d13c1030e15ec9e"
+  },
+  {
+    "path": ".ai/documentation/backend-verification.md",
+    "bytes": 13398,
+    "sha256": "7d84c652fdfc1d7a4f471a5629c8ae4881a6cb48723d28838d3225f4bc7a883e"
+  },
+  {
+    "path": ".ai/documentation/backend.md",
+    "bytes": 18393,
+    "sha256": "b3b2484a7e9c328ff67e14fc9335381eaa6764d26f45b0b4b6b93864b566c151"
+  },
+  {
+    "path": ".ai/documentation/catalog-climb-scenarios.md",
+    "bytes": 5405,
+    "sha256": "94f5e028a102d17bd5349621e906c3fcff42527fd4b9b1ea250f9afae38b3b72"
+  },
+  {
+    "path": ".ai/documentation/database.md",
+    "bytes": 47819,
+    "sha256": "20c196b46290f2f994ca1882220a7d1d10f3e35414b167aee93a9a35f3c7161b"
+  },
+  {
+    "path": ".ai/documentation/decisions.md",
+    "bytes": 57086,
+    "sha256": "27c705c4ee50c151f6d86f4e8649e626e9e49319d2b891dcc5b7152f1c6a0b9c"
+  },
+  {
+    "path": ".ai/documentation/development.md",
+    "bytes": 8666,
+    "sha256": "aa4b92e0c6d44f8f0fcde6f55da939a0050bf4a60ca68eca7146311b0aae5a51"
+  },
+  {
+    "path": ".ai/documentation/diagrams/components.md",
+    "bytes": 1521,
+    "sha256": "dda144b4ee0ea493915e172c99ac402c34673a2e9d5da538ae3f3e991b862ad3"
+  },
+  {
+    "path": ".ai/documentation/diagrams/data-model.md",
+    "bytes": 2861,
+    "sha256": "fb4dc55ff4c8a7dbdf484965efc289689c96ad9a7b4e06dcaeade65737895b55"
+  },
+  {
+    "path": ".ai/documentation/diagrams/record-session-flow.md",
+    "bytes": 1560,
+    "sha256": "39038042f7f324edd6cdd51cd5f467135d7733d3f29615d7b4a1df610a00a0b6"
+  },
+  {
+    "path": ".ai/documentation/diagrams/save-session-sequence.md",
+    "bytes": 2187,
+    "sha256": "c6cff9dbad03c3bf4aa50dac3466eb7ce7cf4f9c62341632d9925705f0e43cd8"
+  },
+  {
+    "path": ".ai/documentation/engineering-thesis-notes.md",
+    "bytes": 9846,
+    "sha256": "a3dd22dac23917396c2008f23001195ac6e87da8169b66c5b0b66f3d534156b7"
+  },
+  {
+    "path": ".ai/documentation/Environments_plan.md",
+    "bytes": 11105,
+    "sha256": "6bc148ab916be58b4d8c5e64aa7ab23f090fe57e2ea1abf3c05e47ed7c57469b"
+  },
+  {
+    "path": ".ai/documentation/firebase-authentication-local-plan.md",
+    "bytes": 29631,
+    "sha256": "bb86a89ead83556438a413ad83dff44b9532861bc9ed4de11a228acf2a15421c"
+  },
+  {
+    "path": ".ai/documentation/firebase-authentication-local.md",
+    "bytes": 11130,
+    "sha256": "4ddcc6fa34a5a99b2c5f07fd6997a19e4a1a605c7a89db329ac824210e7baab2"
+  },
+  {
+    "path": ".ai/documentation/frontend-authentication.md",
+    "bytes": 5369,
+    "sha256": "def26888ab313f98c0be6bcebe54788fa360b5f30ae092dad48d87c044652379"
+  },
+  {
+    "path": ".ai/documentation/frontend-mobile.md",
+    "bytes": 3785,
+    "sha256": "62c4ddd401107e1c8ae5805e6e3e94b5b82680b41f1feba5c1b59c5744eae9cf"
+  },
+  {
+    "path": ".ai/documentation/frontend-web.md",
+    "bytes": 19835,
+    "sha256": "362a7716941d3bb20c2d1bbe700e86c60d3e742c675cfbfffb1a81915e504126"
+  },
+  {
+    "path": ".ai/documentation/mihu-demo-history.md",
+    "bytes": 4944,
+    "sha256": "be57eb671e6f5d5596317442d9b44fb9c28f6edcf1947652a02645576405dc58"
+  },
+  {
+    "path": ".ai/documentation/outdoor-catalog.md",
+    "bytes": 5696,
+    "sha256": "367023c5b93e936fc6bcb3ec348e8450252aaf486a297960e599a454ecf72256"
+  },
+  {
+    "path": ".ai/documentation/period-training-summary.md",
+    "bytes": 9123,
+    "sha256": "d9af013a68ed123c25e3c4ed862e4d7f2c6d87a00915c7cf1e288aca8e1c2c53"
+  },
+  {
+    "path": ".ai/documentation/recency-load.md",
+    "bytes": 4864,
+    "sha256": "d0951c5fd33666eaa0fb394783fe8d1767adf83abe670e939ab2220894df1976"
+  },
+  {
+    "path": ".ai/documentation/statistics-frontend.md",
+    "bytes": 6397,
+    "sha256": "b591d1e5ced487466466871f7fc37472e1f2b8d8a945910359c01e377688cc92"
+  },
+  {
+    "path": ".ai/documentation/training-history-export.md",
+    "bytes": 7074,
+    "sha256": "3f1a4c7cab673c92374a56e28426ca55f4d94b052c36a405df42d212da3af6ac"
+  },
+  {
+    "path": ".ai/project-management/priorities.md",
+    "bytes": 14474,
+    "sha256": "41de1338e768f8837b91a404097876eacb887930f15ac80114e4734b9348e306"
+  },
+  {
+    "path": ".ai/project-management/progress.md",
+    "bytes": 23578,
+    "sha256": "95ffbde373ca2f7415fb20a739b13fda3db8a67b71a0dd5bcde714109fc39227"
+  },
+  {
+    "path": ".ai/project-management/roadmap.md",
+    "bytes": 5160,
+    "sha256": "237c49b294e8d6d32a1c0048353dd9b9e13fb797b6f59cbdab266f68fb0e2174"
+  },
+  {
+    "path": ".ai/project-management/work-log.md",
+    "bytes": 34288,
+    "sha256": "52613114b23e1e7ec00be488135629b8a1d50612bc6bb01feebffb78eea0aa4f"
+  },
+  {
+    "path": ".ai/README.md",
+    "bytes": 13135,
+    "sha256": "218cdf23b2e91a3efac6b9d84989e6ec90a9b3af91a4b4f78dbbd6d3c912c4f0"
+  },
+  {
+    "path": "README.md",
+    "bytes": 2529,
+    "sha256": "1bc58cc7bc6b58f78844006c6b14c2cd453ec70a77b5c55e2dd2e3d355dc3e5f"
+  },
+  {
+    "path": ".ai/archive/README.md",
+    "bytes": 7736,
+    "sha256": "144915ad9999d88cc4cd41d77bbe47b6657f71f23de64e2a0932d06964306544"
+  }
+]
